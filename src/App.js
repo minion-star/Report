@@ -15,6 +15,7 @@ import FAQ from "./scenes/faq";
 import Calendar from "./scenes/calendar/Calendar";
 import Geography from "./scenes/geography";
 import Sidebar from "./scenes/global/Sidebar";
+import Files from "./scenes/files";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -30,6 +31,7 @@ function App() {
             <Topbar setIsSidebar={setIsSidebar} />
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/files" element={<Files/>} />
               <Route path="/team" element={<Team />} />
               <Route path="/contacts" element={<Contacts />} />
               <Route path="/invoices" element={<Invoices />} />

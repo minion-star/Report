@@ -5,9 +5,6 @@ import { Link } from "react-router-dom";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
-import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
-import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
@@ -20,6 +17,7 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 import StorageIcon from '@mui/icons-material/Storage';
 import ScreenSearchDesktopIcon from '@mui/icons-material/ScreenSearchDesktop';
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -124,6 +122,13 @@ const Sidebar = () => {
               title="Home"
               to="/"
               icon={<HomeOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Files"
+              to="/files"
+              icon={<InsertDriveFileOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
