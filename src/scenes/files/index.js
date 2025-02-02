@@ -19,8 +19,10 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Typography,
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
+import CloseIcon from "@mui/icons-material/Close";
 import { Upload } from "@mui/icons-material";
 import * as XLSX from "xlsx";
 import * as formulaJS from "formulajs";
@@ -48,7 +50,7 @@ const Files = () => {
   const [schemas, setSchemas] = useState([]);
   const [selectedTable, setSelectedTable] = useState("");
   const [tables, setTables] = useState([]);
-  const [selectedColumn, setSelectedColumn] = useState("");
+  const [selectedColumn, setSelectedColumn] = useState([]);
   const [columns, setColumns] = useState([]);
   const [displayChart, setDisplayChart] = useState(null);
   const [displayTable, setDisplayTable] = useState(null);
@@ -157,8 +159,22 @@ const Files = () => {
       </Box>
 
       {/* Dialog for Google Cloud Download */}
-      <Dialog open={cloudDownloadDialog} onClose={() => {}}>
-        <DialogTitle>Google Cloud Download</DialogTitle>
+      <Dialog open={cloudDownloadDialog} onClose={() => {}} sx={{borderRadius:"16px",  "& .MuiDialog-paper": { width: "400px", height: "auto" },}}>
+        <Box sx={{display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          backgroundColor: "green",
+          color: "white",
+          padding: "8px 8px",
+          borderTopLeftRadius: "4px",
+          borderTopRightRadius: "4px",
+        }}
+        >
+          <Typography variant="h6">Download from Google Cloud</Typography>
+            <IconButton aria-label="close" color="inherit" onClick={() => setCloudDownloadDialog(false)}>
+              <CloseIcon />
+            </IconButton>
+        </Box>
         <DialogContent>
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Schema</InputLabel>
@@ -178,7 +194,7 @@ const Files = () => {
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Column</InputLabel>
-            <Select value={selectedColumn} onChange={(e) => setSelectedColumn(e.target.value)}>
+            <Select value={selectedColumn} onChange={(e) => setSelectedColumn(e.target.value)} multiple>
               {columns.map((column) => (
               <MenuItem key={column} value={column}>{column}</MenuItem>
               ))}
