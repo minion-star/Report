@@ -13,20 +13,25 @@ import {
   Avatar,
   IconButton,
   useTheme,
+  ButtonGroup,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
 import { Upload } from "@mui/icons-material";
 import * as XLSX from "xlsx";
+import * as formulaJS from "formulajs";
 import Handsontable from "handsontable";
 import "handsontable/dist/handsontable.full.css";
 import ChatbotDrawer from "./ChatbotDrawer";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
-import { registerAllModules } from "handsontable/registry";
 import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
-import HyperFormula from "hyperformula";
 
-registerAllModules();
+const schemaName = ["Analytics","Commit", "Dataset1", "Dataset2", "Inventory", "Planning", "Prestage", "Query_Save", "Sales", "Staging", "Versions"]
+
 
 const Files = () => {
   const theme = useTheme();
@@ -35,13 +40,37 @@ const Files = () => {
   const [files, setFiles] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const [formulaDialog, setFormulaDialog] = useState(false);
+  const [cloudDownloadDialog, setCloudDownloadDialog] = useState(false);
   const [formula, setFormula] = useState("");
   const hotTableRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const hyperformulaInstance = useRef(null);
-  const [selectedCell, setSelectedCell] = useState(null);
+  const fileInputRef = useRef(null);
+  const [selectedSchema, setSelectedSchema] = useState("");
+  const [schemas, setSchemas] = useState([]);
+  const [table, setTable] = useState("");
+  const [column, setColumn] = useState("");
+  const [displayChart, setDisplayChart] = useState(null);
+  const [displayTable, setDisplayTable] = useState(null);
 
-  
+  useEffect(() => {
+    // Fetch schemas from API
+    fetch("http://127.0.0.1:5000/api/get_all_schemas")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.schemas) {
+          setSchemas(data.schemas); // Update state with schemas
+        }
+      })
+      .catch((error) => console.error("Error fetching schemas:", error));
+  }, []);
+
+  const handleDisplayChart = () =>{
+    setDisplayChart(true);
+  }
+
+  const handleDisplayTable = () =>{
+    setDisplayTable(true);
+  }
 
   const handleFileUpload = (event) => {
     const uploadedFiles = Array.from(event.target.files);
@@ -59,11 +88,6 @@ const Files = () => {
   };
 
   useEffect(() => {
-    // Initialize HyperFormula
-    if (!hyperformulaInstance.current) {
-      hyperformulaInstance.current = HyperFormula.buildEmpty();
-    }
-
     if (hotTableRef.current && files.length > 0) {
       new Handsontable(hotTableRef.current, {
         data: files[activeTab].data,
@@ -72,76 +96,67 @@ const Files = () => {
         width: "100%",
         height: "500px",
         licenseKey: "non-commercial-and-evaluation",
-        formulas: {
-          engine: hyperformulaInstance.current, // Use HyperFormula
-        },
-        contextMenu: true, // Enable right-click menu
-        manualRowMove: true,
-        manualColumnMove: true,
-        filters: true,
-        dropdownMenu: true,
-        columnSorting: true,
-        allowInsertRow: true,
-        allowInsertColumn: true,
-        afterSelection: (row, col) => {
-          setSelectedCell({ row, col }); // Store selected cell
-        },
       });
     }
   }, [files, activeTab]);
 
   const applyFormula = () => {
-    if (!selectedCell) {
-      alert("Please select a cell first.");
-      return;
-    }
-
     try {
-      const { row, col } = selectedCell;
-      const hotInstance = Handsontable.getInstance(hotTableRef.current);
-      hotInstance.setDataAtCell(row, col, formula); // Apply formula to selected cell
+      const result = formulaJS.SUM ? formulaJS.SUM([10, 20, 30]) : "Formula not found";
+      alert(`Formula result: ${result}`);
     } catch (error) {
       alert("Invalid Formula");
     }
     setFormulaDialog(false);
   };
+
   return (
     <Box m="20px">
       <Header title="FILES" subtitle="Manage and View Your Excel Files" />
 
       {/* Buttons Section */}
-      <Box display="flex" gap={2} mt={2}>
-        <label htmlFor="upload-excel">
-          <Button
-            variant="contained"
-            component="span"
-            startIcon={<Upload />}
-            sx={{ backgroundColor: colors.greenAccent[600] }}
-          >
-            Upload Excel
-          </Button>
-        </label>
-
-        <Button
-          variant="contained"
-          sx={{ backgroundColor: colors.greenAccent[600]}}
-          onClick={() => setFormulaDialog(true)}
-          startIcon={<FunctionsOutlinedIcon />}
-        >
-          Apply Formula
-        </Button>
-
-        <label htmlFor="fetch-data-gcp">
-          <Button
-            variant="contained"
-            component="span"
-            startIcon={<CloudDownloadOutlinedIcon />}
-            sx={{ backgroundColor: colors.blueAccent[600] }}
-          >
-            GCP BQ
-          </Button>
-        </label>
+      <Box display="flex">
+        <ButtonGroup variant="contained" component="span" color="success">
+          <Button onClick={() => fileInputRef.current.click()}><Upload /></Button>
+          <Button onClick={() => setFormulaDialog(true)}><FunctionsOutlinedIcon/></Button>
+          <Button onClick={() => setCloudDownloadDialog(true)}><CloudDownloadOutlinedIcon /></Button>
+        </ButtonGroup>
       </Box>
+
+      {/* Dialog for Google Cloud Download */}
+      <Dialog open={cloudDownloadDialog} onClose={() => {}}>
+        <DialogTitle>Google Cloud Download</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Schema</InputLabel>
+            <Select value={selectedSchema} onChange={(e) => setSelectedSchema(e.target.value)}>
+            {schemas.map((key) => (
+            <MenuItem key={key} value={key}>{key}</MenuItem>
+          ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Table</InputLabel>
+            <Select value={table} onChange={(e) => setTable(e.target.value)}>
+              <MenuItem value={"option2_value1"}>Option 2 - Value 1</MenuItem>
+              <MenuItem value={"option2_value2"}>Option 2 - Value 2</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Column</InputLabel>
+            <Select value={column} onChange={(e) => setColumn(e.target.value)}>
+              <MenuItem value={"option3_value1"}>Option 3 - Value 1</MenuItem>
+              <MenuItem value={"option3_value2"}>Option 3 - Value 2</MenuItem>
+            </Select>
+          </FormControl>
+          <Box display="flex" justifyContent="space-between" sx={{ mt: 3 }}>
+            <Button variant="contained" color="secondary" onClick={handleDisplayChart}>Chart</Button>
+            <Button variant="contained" color="secondary" onClick={handleDisplayTable}>Table</Button>
+            <Button variant="outlined"  color="error" onClick={() => setCloudDownloadDialog(false)}>Cancel</Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Dialog for Formula Input */}
       <Dialog open={formulaDialog} onClose={() => setFormulaDialog(false)}>
@@ -181,9 +196,9 @@ const Files = () => {
 
       {/* File Upload Input */}
       <input
+        ref={fileInputRef}
         accept=".xlsx, .xls"
         style={{ display: "none" }}
-        id="upload-excel"
         multiple
         type="file"
         onChange={handleFileUpload}
