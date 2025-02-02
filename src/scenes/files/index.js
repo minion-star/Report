@@ -48,7 +48,8 @@ const Files = () => {
   const [schemas, setSchemas] = useState([]);
   const [selectedTable, setSelectedTable] = useState("");
   const [tables, setTables] = useState([]);
-  const [column, setColumn] = useState("");
+  const [selectedColumn, setSelectedColumn] = useState("");
+  const [columns, setColumns] = useState([]);
   const [displayChart, setDisplayChart] = useState(null);
   const [displayTable, setDisplayTable] = useState(null);
 
@@ -70,7 +71,7 @@ const Files = () => {
   useEffect(()=>{
     const fetchData = async() => {
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/api/get_all_tables/${selectedSchema}`);
+        const response = await axios.get(`http://127.0.0.1:5000/api/get_all_schemas/${selectedSchema}`);
         const data = response.data;
         console.log("tables", data);
         setTables(data);
@@ -81,6 +82,21 @@ const Files = () => {
     }
     fetchData();
   },[selectedSchema])
+
+  useEffect(()=>{
+    const fetchData = async() => {
+      try {
+        const response = await axios.get(`http://127.0.0.1:5000/api/get_all_schemas/${selectedSchema}/${selectedColumn}`);
+        const data = response.data;
+        console.log("columns", data);
+        setTables(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    
+    }
+    fetchData();
+  },[selectedSchema, selectedColumn])
   const handleDisplayChart = () =>{
     setDisplayChart(true);
   }
@@ -162,9 +178,10 @@ const Files = () => {
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Column</InputLabel>
-            <Select value={column} onChange={(e) => setColumn(e.target.value)}>
-              <MenuItem value={"option3_value1"}>Option 3 - Value 1</MenuItem>
-              <MenuItem value={"option3_value2"}>Option 3 - Value 2</MenuItem>
+            <Select value={selectedColumn} onChange={(e) => setSelectedColumn(e.target.value)}>
+              {columns.map((key) => (
+              <MenuItem key={key} value={key}>{key}</MenuItem>
+              ))}
             </Select>
           </FormControl>
           <Box display="flex" justifyContent="space-between" sx={{ mt: 3 }}>
