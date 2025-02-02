@@ -107,7 +107,7 @@ def get_tables(schema):
         return jsonify({"error":"Failed to fetch tables"}), 500
     return tables
 
-@app.route("/api/get_all_schemas/<schema>/<table>", methods=["GET"])
+@app.route("/api/get_all_columns/<schema>/<table>", methods=["GET"])
 def get_columns(schema, table):
     if not client:
         return jsonify({"error": "BigQuery client not initialized."}), 500
