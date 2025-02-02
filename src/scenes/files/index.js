@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import {
   Box,
   AppBar,
@@ -30,8 +31,6 @@ import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
 
-const schemaName = ["Analytics","Commit", "Dataset1", "Dataset2", "Inventory", "Planning", "Prestage", "Query_Save", "Sales", "Staging", "Versions"]
-
 
 const Files = () => {
   const theme = useTheme();
@@ -47,23 +46,41 @@ const Files = () => {
   const fileInputRef = useRef(null);
   const [selectedSchema, setSelectedSchema] = useState("");
   const [schemas, setSchemas] = useState([]);
-  const [table, setTable] = useState("");
+  const [selectedTable, setSelectedTable] = useState("");
+  const [tables, setTables] = useState([]);
   const [column, setColumn] = useState("");
   const [displayChart, setDisplayChart] = useState(null);
   const [displayTable, setDisplayTable] = useState(null);
 
   useEffect(() => {
     // Fetch schemas from API
-    fetch("http://127.0.0.1:5000/api/get_all_schemas")
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.schemas) {
-          setSchemas(data.schemas); // Update state with schemas
-        }
-      })
-      .catch((error) => console.error("Error fetching schemas:", error));
+    const fetchData = async() => {
+      try {
+        const response = await axios.get("http://127.0.0.1:5000/api/get_all_schemas");
+        const data = response.data;
+        console.log("schemas", data);
+        setSchemas(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+    fetchData();
   }, []);
 
+  useEffect(()=>{
+    const fetchData = async() => {
+      try {
+        const response = await axios.get(`http://127.0.0.1:5000/api/get_all_tables/${selectedSchema}`);
+        const data = response.data;
+        console.log("tables", data);
+        setTables(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    
+    }
+    fetchData();
+  },[selectedSchema])
   const handleDisplayChart = () =>{
     setDisplayChart(true);
   }
@@ -137,9 +154,10 @@ const Files = () => {
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Table</InputLabel>
-            <Select value={table} onChange={(e) => setTable(e.target.value)}>
-              <MenuItem value={"option2_value1"}>Option 2 - Value 1</MenuItem>
-              <MenuItem value={"option2_value2"}>Option 2 - Value 2</MenuItem>
+            <Select value={selectedTable} onChange={(e) => setSelectedTable(e.target.value)}>
+              {tables.map((key) => (
+              <MenuItem key={key} value={key}>{key}</MenuItem>
+              ))}
             </Select>
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
