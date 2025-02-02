@@ -1,4 +1,3 @@
-
 from google.oauth2 import service_account
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -53,18 +52,14 @@ def get_only_prestage_tables():
     return table_list
 
 
-def get_all_columns(table_name):
-    data_split = table_name.split(".")
-    dataset_id = data_split[0]
-    table_id = data_split[1]
+def get_all_columns(schema, table):
+    dataset_id = schema
+    table_id = table
     dataset_ref = client.get_dataset(dataset_id)
     table_ref = dataset_ref.table(table_id)
     table = client.get_table(table_ref)
     schema = table.schema
-    result = ""
-    for column in schema:
-        result += "#" + column.name
-
+    result = [column.name for column in schema]
     return result
 
 
@@ -103,7 +98,7 @@ def get_schemas():
         return jsonify({"error": "Failed to fetch schemas."}), 500
     return jsonify(schemas)
 
-@app.route("/api/get_all_tables/<schema>", methods=["GET"])
+@app.route("/api/get_all_schemas/<schema>", methods=["GET"])
 def get_tables(schema):
     if not client:
         return jsonify({"error": "BigQuery client not initialized."}), 500
@@ -112,6 +107,14 @@ def get_tables(schema):
         return jsonify({"error":"Failed to fetch tables"}), 500
     return tables
 
+@app.route("/api/get_all_schemas/<schema>/<table>", methods=["GET"])
+def get_columns(schema, table):
+    if not client:
+        return jsonify({"error": "BigQuery client not initialized."}), 500
+    columns = get_all_columns(schema, table)
+    if columns is None:
+        return jsonify({"error":"Failed to fetch columns"}), 500
+    return columns
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
