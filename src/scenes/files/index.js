@@ -86,7 +86,7 @@ const Files = () => {
   useEffect(()=>{
     const fetchData = async() => {
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/api/get_all_schemas/${selectedSchema}/${selectedColumn}`);
+        const response = await axios.get(`http://127.0.0.1:5000/api/get_all_schemas/${selectedSchema}/${selectedTable}`);
         const data = response.data;
         console.log("columns", data);
         setTables(data);
@@ -96,7 +96,7 @@ const Files = () => {
     
     }
     fetchData();
-  },[selectedSchema, selectedColumn])
+  },[selectedSchema, selectedTable])
   const handleDisplayChart = () =>{
     setDisplayChart(true);
   }
