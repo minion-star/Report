@@ -86,10 +86,10 @@ const Files = () => {
   useEffect(()=>{
     const fetchData = async() => {
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/api/get_all_schemas/${selectedSchema}/${selectedTable}`);
+        const response = await axios.get(`http://127.0.0.1:5000/api/get_all_columns/${selectedSchema}/${selectedTable}`);
         const data = response.data;
         console.log("columns", data);
-        setTables(data);
+        setColumns(data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -163,24 +163,24 @@ const Files = () => {
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Schema</InputLabel>
             <Select value={selectedSchema} onChange={(e) => setSelectedSchema(e.target.value)}>
-            {schemas.map((key) => (
-            <MenuItem key={key} value={key}>{key}</MenuItem>
+            {schemas.map((schema) => (
+            <MenuItem key={schema} value={schema}>{schema}</MenuItem>
           ))}
             </Select>
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Table</InputLabel>
             <Select value={selectedTable} onChange={(e) => setSelectedTable(e.target.value)}>
-              {tables.map((key) => (
-              <MenuItem key={key} value={key}>{key}</MenuItem>
+              {tables.map((table) => (
+              <MenuItem key={table} value={table}>{table}</MenuItem>
               ))}
             </Select>
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Column</InputLabel>
             <Select value={selectedColumn} onChange={(e) => setSelectedColumn(e.target.value)}>
-              {columns.map((key) => (
-              <MenuItem key={key} value={key}>{key}</MenuItem>
+              {columns.map((column) => (
+              <MenuItem key={column} value={column}>{column}</MenuItem>
               ))}
             </Select>
           </FormControl>
