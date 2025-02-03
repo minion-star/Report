@@ -164,11 +164,7 @@ const Files = () => {
         autoColumnSize: true,
       });
     }
-    return () => {
-      if (hotInstanceRef.current) {
-        hotInstanceRef.current.destroy();  // Clean up on component unmount
-      }
-    };
+    
   }, [files, activeTab]);
 
   const handleApplyFormula = () => {
