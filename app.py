@@ -53,14 +53,17 @@ def get_only_prestage_tables():
 
 
 def get_all_columns(schema, table):
-    dataset_id = schema
-    table_id = table
-    dataset_ref = client.get_dataset(dataset_id)
-    table_ref = dataset_ref.table(table_id)
-    table = client.get_table(table_ref)
-    schema = table.schema
-    result = [column.name for column in schema]
-    return result
+    try:
+        dataset_id = schema
+        table_id = table
+        dataset_ref = client.get_dataset(dataset_id)
+        table_ref = dataset_ref.table(table_id)
+        table = client.get_table(table_ref)
+        schema = table.schema
+        result = [column.name for column in schema]
+        return result
+    except Exception as e:
+        return None
 
 # schema names api
 @app.route("/api/get_all_schemas", methods=['GET'])
