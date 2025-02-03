@@ -32,6 +32,7 @@ import ChatbotDrawer from "./ChatbotDrawer";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 
 
 const Files = () => {
@@ -53,9 +54,7 @@ const Files = () => {
   const [tables, setTables] = useState([]);
   const [selectedColumn, setSelectedColumn] = useState([]);
   const [columns, setColumns] = useState([]);
-  const [tableData, setTableData] = useState([]);
-  const [displayChart, setDisplayChart] = useState(null);
-  const [displayTable, setDisplayTable] = useState(null);
+
 
   useEffect(() => {
     // Fetch schemas from API
@@ -129,11 +128,6 @@ const Files = () => {
   };
 
 
-  const handleDisplayChart = () =>{
-    setDisplayChart(true);
-  }
-
-
   const handleFileUpload = (event) => {
     const uploadedFiles = Array.from(event.target.files);
     uploadedFiles.forEach((file) => {
@@ -185,6 +179,7 @@ const Files = () => {
           <Button onClick={() => fileInputRef.current.click()}><Upload /></Button>
           <Button onClick={() => setFormulaDialog(true)}><FunctionsOutlinedIcon/></Button>
           <Button onClick={() => setCloudDownloadDialog(true)}><CloudDownloadOutlinedIcon /></Button>
+          <Button><SaveOutlinedIcon/></Button>
         </ButtonGroup>
       </Box>
 
@@ -231,8 +226,7 @@ const Files = () => {
             </Select>
           </FormControl>
           <Box display="flex" justifyContent="space-between" sx={{ mt: 3 }}>
-            <Button variant="contained" color="secondary" onClick={handleDisplayChart}>Chart</Button>
-            <Button variant="contained" color="secondary" onClick={handleDisplayTable}>Table</Button>
+            <Button variant="contained" color="secondary" onClick={handleDisplayTable}>Upload</Button>
             <Button variant="outlined"  color="error" onClick={() => setCloudDownloadDialog(false)}>Cancel</Button>
           </Box>
         </DialogContent>
