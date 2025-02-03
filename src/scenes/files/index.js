@@ -20,19 +20,22 @@ import {
   FormControl,
   InputLabel,
   Typography,
+  DialogActions,
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import { Upload } from "@mui/icons-material";
 import * as XLSX from "xlsx";
-import * as formulaJS from "formulajs";
 import Handsontable from "handsontable";
 import "handsontable/dist/handsontable.full.css";
 import ChatbotDrawer from "./ChatbotDrawer";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
+import { registerAllModules } from 'handsontable/registry'
 import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+
+registerAllModules();
 
 
 const Files = () => {
@@ -43,7 +46,8 @@ const Files = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [formulaDialog, setFormulaDialog] = useState(false);
   const [cloudDownloadDialog, setCloudDownloadDialog] = useState(false);
-  const [formula, setFormula] = useState("");
+  const [cellInput, setCellInput] = useState('');
+  const [formulaInput, setFormulaInput] = useState('');
   const hotTableRef = useRef(null);
   const hotInstanceRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -54,9 +58,7 @@ const Files = () => {
   const [tables, setTables] = useState([]);
   const [selectedColumn, setSelectedColumn] = useState([]);
   const [columns, setColumns] = useState([]);
-  const [tableData, setTableData] = useState([]);
-  const [displayChart, setDisplayChart] = useState(null);
-  const [displayTable, setDisplayTable] = useState(null);
+
 
   useEffect(() => {
     // Fetch schemas from API
@@ -130,11 +132,6 @@ const Files = () => {
   };
 
 
-  const handleDisplayChart = () =>{
-    setDisplayChart(true);
-  }
-
-
   const handleFileUpload = (event) => {
     const uploadedFiles = Array.from(event.target.files);
     uploadedFiles.forEach((file) => {
@@ -162,18 +159,30 @@ const Files = () => {
         width: "100%",
         height: "500px",
         licenseKey: "non-commercial-and-evaluation",
+        contextMenu:true,
+        formulas: true,
+        autoColumnSize: true,
       });
     }
+    return () => {
+      if (hotInstanceRef.current) {
+        hotInstanceRef.current.destroy();  // Clean up on component unmount
+      }
+    };
   }, [files, activeTab]);
 
-  const applyFormula = () => {
-    try {
-      const result = formulaJS.SUM ? formulaJS.SUM([10, 20, 30]) : "Formula not found";
-      alert(`Formula result: ${result}`);
-    } catch (error) {
-      alert("Invalid Formula");
+  const handleApplyFormula = () => {
+    if (hotInstanceRef.current && cellInput && formulaInput) {
+      const match = cellInput.toUpperCase().match(/([A-Z]+)([0-9]+)/);
+      if (match) {
+        const col = match[1].charCodeAt(0) - 65;
+        const row = parseInt(match[2], 10) - 1;
+        hotInstanceRef.current.setDataAtCell(row, col, `=${formulaInput}`);
+      }
     }
     setFormulaDialog(false);
+    setCellInput('');
+    setFormulaInput('');
   };
 
   return (
@@ -233,8 +242,7 @@ const Files = () => {
             </Select>
           </FormControl>
           <Box display="flex" justifyContent="space-between" sx={{ mt: 3 }}>
-            <Button variant="contained" color="secondary" onClick={handleDisplayChart}>Chart</Button>
-            <Button variant="contained" color="secondary" onClick={handleDisplayTable}>Table</Button>
+            <Button variant="contained" color="secondary" onClick={handleDisplayTable}>Upload</Button>
             <Button variant="outlined"  color="error" onClick={() => setCloudDownloadDialog(false)}>Cancel</Button>
           </Box>
         </DialogContent>
@@ -246,23 +254,26 @@ const Files = () => {
         <DialogTitle>Enter Formula</DialogTitle>
         <DialogContent>
           <TextField
+            label="Cell (e.g., A1)"
             fullWidth
-            label="Formula"
-            variant="outlined"
-            value={formula}
-            onChange={(e) => setFormula(e.target.value)}
+            value={cellInput}
+            onChange={(e) => setCellInput(e.target.value)}
+            sx={{ mb: 2 }}
           />
-          <Button
-            onClick={applyFormula}
-            variant="contained"
-            color="primary"
-            sx={{ mt: 2 }}
-          >
-            Apply
-          </Button>
+          <TextField
+            label="Formula (e.g., VLOOKUP(10, A1:B10, 2, FALSE))"
+            fullWidth
+            value={formulaInput}
+            onChange={(e) => setFormulaInput(e.target.value)}
+            helperText="Supports VLOOKUP, XLOOKUP, HLOOKUP, IF, AND, OR, NOT, XOR, etc."
+          />
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFormulaDialog(false)}>Cancel</Button>
+          <Button onClick={handleApplyFormula} variant="contained" color="primary">Apply</Button>
+        </DialogActions>
       </Dialog>
-
+      
       {/* Tabs for Uploaded Files and Backend Data */}
       {files.length > 0 && (
         <AppBar position="static" sx={{ mt: 3, backgroundColor: colors.blueAccent[700] }}>
@@ -273,6 +284,8 @@ const Files = () => {
           </Tabs>
         </AppBar>
       )}
+
+      
       {/* Handsontable Display */}
       <Box ref={hotTableRef} />
 
