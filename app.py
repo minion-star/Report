@@ -62,33 +62,7 @@ def get_all_columns(schema, table):
     result = [column.name for column in schema]
     return result
 
-
-# columns = "C_CUSTKEU, C_NAME"
-def get_table_data(table_name):
-    data_split = table_name.split(".")
-    dataset_id = data_split[1]
-    table_id = data_split[2]
-    dataset_ref = client.get_dataset(dataset_id)
-    table_ref = dataset_ref.table(table_id)
-    table = client.get_table(table_ref)
-    sql = "SELECT * from lyrical-country-397623.Query_Save.Analytics_Customer_Orders_v0"
-    results = client.query(sql).result()
-    for row in results:
-        print(row)
-    return
-    fields = table.schema[:2]
-    rows_iter = client.list_rows(table_name)
-    rows = list(rows_iter)
-    sql = "SELECT * from {}".format(table_name)
-    df = client.list_rows(table_name).to_dataframe(create_bqstorage_client=True)
-    # field_names = [field.name for field in rows_iter.schema]
-    print(df)
-    return
-
-
-# get_table_data("lyrical-country-397623.Query_Save.Analytics_Customer_Orders_v0")
-
-
+# schema names api
 @app.route("/api/get_all_schemas", methods=['GET'])
 def get_schemas():
     if not client:
@@ -97,7 +71,7 @@ def get_schemas():
     if schemas is None:
         return jsonify({"error": "Failed to fetch schemas."}), 500
     return jsonify(schemas)
-
+# table names api
 @app.route("/api/get_all_schemas/<schema>", methods=["GET"])
 def get_tables(schema):
     if not client:
@@ -106,7 +80,7 @@ def get_tables(schema):
     if tables is None:
         return jsonify({"error":"Failed to fetch tables"}), 500
     return tables
-
+# column names api
 @app.route("/api/get_all_columns/<schema>/<table>", methods=["GET"])
 def get_columns(schema, table):
     if not client:
@@ -115,6 +89,28 @@ def get_columns(schema, table):
     if columns is None:
         return jsonify({"error":"Failed to fetch columns"}), 500
     return columns
+# fetching table data api
+@app.route("/api/get_selected_columns/<schema>/<table>", methods=["POST"])
+def get_selected_columns(schema, table):
+    if not client:
+        return jsonify({"error": "BigQuery client not initialized."}), 500
+
+    selected_columns = request.json.get('columns')
+    if not selected_columns:
+        return jsonify({"error": "No columns selected."}), 400
+
+    # Ensure column names are properly formatted to prevent SQL injection
+    columns_str = ", ".join([f"`{col}`" for col in selected_columns])
+
+    sql = f"SELECT {columns_str} FROM `{credentials.project_id}.{schema}.{table}`"
+    
+    try:
+        df = client.query(sql).to_dataframe()
+        return jsonify(df.to_dict(orient='records'))
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch data: {str(e)}"}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
