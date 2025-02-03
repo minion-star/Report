@@ -44,6 +44,7 @@ const Files = () => {
   const [cloudDownloadDialog, setCloudDownloadDialog] = useState(false);
   const [formula, setFormula] = useState("");
   const hotTableRef = useRef(null);
+  const hotInstanceRef = useRef(null);
   const [open, setOpen] = useState(false);
   const fileInputRef = useRef(null);
   const [selectedSchema, setSelectedSchema] = useState("");
@@ -52,6 +53,7 @@ const Files = () => {
   const [tables, setTables] = useState([]);
   const [selectedColumn, setSelectedColumn] = useState([]);
   const [columns, setColumns] = useState([]);
+  const [tableData, setTableData] = useState([]);
   const [displayChart, setDisplayChart] = useState(null);
   const [displayTable, setDisplayTable] = useState(null);
 
@@ -61,7 +63,6 @@ const Files = () => {
       try {
         const response = await axios.get("http://127.0.0.1:5000/api/get_all_schemas");
         const data = response.data;
-        console.log("schemas", data);
         setSchemas(data);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -75,7 +76,6 @@ const Files = () => {
       try {
         const response = await axios.get(`http://127.0.0.1:5000/api/get_all_schemas/${selectedSchema}`);
         const data = response.data;
-        console.log("tables", data);
         setTables(data);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -90,7 +90,6 @@ const Files = () => {
       try {
         const response = await axios.get(`http://127.0.0.1:5000/api/get_all_columns/${selectedSchema}/${selectedTable}`);
         const data = response.data;
-        console.log("columns", data);
         setColumns(data);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -99,13 +98,41 @@ const Files = () => {
     }
     fetchData();
   },[selectedSchema, selectedTable])
+  const handleDisplayTable = async () => {
+    if (selectedColumn.length === 0) {
+      console.log("Please select at least one column.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post(
+        `http://127.0.0.1:5000/api/get_selected_columns/${selectedSchema}/${selectedTable}`,
+        { columns: selectedColumn }
+      );
+  
+      const backendData = response.data;
+  
+      // Convert backend data into a 2D array for Handsontable (add headers as the first row)
+      const headers = selectedColumn;
+      const formattedData = [headers, ...backendData.map((row) => headers.map((col) => row[col]))];
+  
+      // Add backend data as a new tab
+      setFiles((prevFiles) => [...prevFiles, { name: `Backend Data - ${new Date().toLocaleTimeString()}`, data: formattedData }]);
+  
+      // Automatically switch to the new tab
+      setActiveTab(files.length);  // Since a new file is added at the end
+      setCloudDownloadDialog(false);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+
+    }
+  };
+
+
   const handleDisplayChart = () =>{
     setDisplayChart(true);
   }
 
-  const handleDisplayTable = () =>{
-    setDisplayTable(true);
-  }
 
   const handleFileUpload = (event) => {
     const uploadedFiles = Array.from(event.target.files);
@@ -124,7 +151,10 @@ const Files = () => {
 
   useEffect(() => {
     if (hotTableRef.current && files.length > 0) {
-      new Handsontable(hotTableRef.current, {
+      if (hotInstanceRef.current) {
+        hotInstanceRef.current.destroy();  // Destroy previous instance
+      }
+      hotInstanceRef.current = new Handsontable(hotTableRef.current, {
         data: files[activeTab].data,
         colHeaders: true,
         rowHeaders: true,
@@ -242,8 +272,19 @@ const Files = () => {
         </AppBar>
       )}
 
-      {/* Handsontable Spreadsheet Display */}
-      <Box ref={hotTableRef}/>
+      {/* Tabs for Uploaded Files and Backend Data */}
+      {files.length > 0 && (
+        <AppBar position="static" sx={{ mt: 3 }}>
+          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+            {files.map((file, index) => (
+              <Tab key={index} label={file.name} />
+            ))}
+          </Tabs>
+        </AppBar>
+      )}
+
+      {/* Handsontable Display */}
+      <Box ref={hotTableRef} />
 
       {/* File Upload Input */}
       <input
