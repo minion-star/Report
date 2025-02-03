@@ -54,7 +54,9 @@ const Files = () => {
   const [tables, setTables] = useState([]);
   const [selectedColumn, setSelectedColumn] = useState([]);
   const [columns, setColumns] = useState([]);
-
+  const [tableData, setTableData] = useState([]);
+  const [displayChart, setDisplayChart] = useState(null);
+  const [displayTable, setDisplayTable] = useState(null);
 
   useEffect(() => {
     // Fetch schemas from API
@@ -126,6 +128,11 @@ const Files = () => {
 
     }
   };
+
+
+  const handleDisplayChart = () =>{
+    setDisplayChart(true);
+  }
 
 
   const handleFileUpload = (event) => {
@@ -226,7 +233,8 @@ const Files = () => {
             </Select>
           </FormControl>
           <Box display="flex" justifyContent="space-between" sx={{ mt: 3 }}>
-            <Button variant="contained" color="secondary" onClick={handleDisplayTable}>Upload</Button>
+            <Button variant="contained" color="secondary" onClick={handleDisplayChart}>Chart</Button>
+            <Button variant="contained" color="secondary" onClick={handleDisplayTable}>Table</Button>
             <Button variant="outlined"  color="error" onClick={() => setCloudDownloadDialog(false)}>Cancel</Button>
           </Box>
         </DialogContent>
@@ -255,7 +263,7 @@ const Files = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Tabs for Files */}
+      {/* Tabs for Uploaded Files and Backend Data */}
       {files.length > 0 && (
         <AppBar position="static" sx={{ mt: 3, backgroundColor: colors.blueAccent[700] }}>
           <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
@@ -265,18 +273,6 @@ const Files = () => {
           </Tabs>
         </AppBar>
       )}
-
-      {/* Tabs for Uploaded Files and Backend Data */}
-      {files.length > 0 && (
-        <AppBar position="static" sx={{ mt: 3 }}>
-          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
-            {files.map((file, index) => (
-              <Tab key={index} label={file.name} />
-            ))}
-          </Tabs>
-        </AppBar>
-      )}
-
       {/* Handsontable Display */}
       <Box ref={hotTableRef} />
 
