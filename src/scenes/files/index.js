@@ -340,8 +340,8 @@ const Files = () => {
               ))}
             </Select>
           </FormControl>
-          <Box display="flex" justifyContent="space-between" sx={{ mt: 3 }}>
-            <Button variant="contained" color="secondary" onClick={handleDisplayTable}>Upload</Button>
+          <Box display="flex" sx={{ mt: 3 }} justifyContent="right" gap={2}>
+            <Button variant="contained" color="success" onClick={handleDisplayTable}>Upload</Button>
             <Button variant="outlined"  color="error" onClick={() => setCloudDownloadDialog(false)}>Cancel</Button>
           </Box>
         </DialogContent>
@@ -353,24 +353,25 @@ const Files = () => {
         <DialogTitle>Enter Formula</DialogTitle>
         <DialogContent>
           <TextField
-            label="Cell (e.g., A1)"
+            label="Cell"
+            placeholder="Cell (e.g., A1)"
             fullWidth
             value={cellInput}
             onChange={(e) => setCellInput(e.target.value)}
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, mt:2 }}
           />
           <TextField
-            label="Formula (e.g., VLOOKUP(10, A1:B10, 2, FALSE))"
+            label="Formula"
+            placeholder="Formula (e.g., VLOOKUP(10, A1:B10, 2, FALSE))"
             fullWidth
             value={formulaInput}
             onChange={(e) => setFormulaInput(e.target.value)}
-            helperText="Supports VLOOKUP, XLOOKUP, HLOOKUP, IF, AND, OR, NOT, XOR, etc."
           />
+          <Box display="flex" sx={{ mt: 3 }} justifyContent="right" gap={2}>
+            <Button onClick={handleApplyFormula} variant="contained" color="success">Apply</Button>
+            <Button onClick={() => setFormulaDialog(false)} variant="outlined" color="error">Cancel</Button>
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setFormulaDialog(false)}>Cancel</Button>
-          <Button onClick={handleApplyFormula} variant="contained" color="primary">Apply</Button>
-        </DialogActions>
       </Dialog>
       
       {/* Tabs for Uploaded Files and Backend Data */}
