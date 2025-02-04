@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, createContext } from "react";
 import axios from "axios";
 import {
   Box,
@@ -21,6 +21,8 @@ import {
   InputLabel,
   Typography,
   DialogActions,
+  Checkbox,
+  ListItem,
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
 import CloseIcon from "@mui/icons-material/Close";
@@ -44,7 +46,7 @@ import PercentOutlinedIcon from '@mui/icons-material/PercentOutlined';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import HeightOutlinedIcon from '@mui/icons-material/HeightOutlined';
-
+import Chart from "chart.js/auto";
 
 registerAllModules();
 
@@ -69,6 +71,10 @@ const Files = () => {
   const [tables, setTables] = useState([]);
   const [selectedColumn, setSelectedColumn] = useState([]);
   const [columns, setColumns] = useState([]);
+  const chartRef = useRef(null);
+  const [selectedData, setSelectedData] = useState([]);
+  const [chartType, setChartType] = useState("line"); // Default to Line chart
+  const [chartOpen, setChartOpen] = useState(false)
 
 
   useEffect(() => {
@@ -112,6 +118,8 @@ const Files = () => {
     }
     fetchData();
   },[selectedSchema, selectedTable])
+
+
   const handleDisplayTable = async () => {
     if (selectedColumn.length === 0) {
       console.log("Please select at least one column.");
@@ -125,7 +133,7 @@ const Files = () => {
       );
   
       const backendData = response.data;
-  
+      console.log(backendData);
       // Convert backend data into a 2D array for Handsontable (add headers as the first row)
       const headers = selectedColumn;
       const formattedData = [headers, ...backendData.map((row) => headers.map((col) => row[col]))];
@@ -186,7 +194,18 @@ const Files = () => {
               }
             });
           }
-        }
+        },
+        afterSelectionEnd: (r1, c1, r2, c2) => {
+          const extractedData = [];
+          for (let row = r1; row <= r2; row++) {
+            const rowData = [];
+            for (let col = c1; col <= c2; col++) {
+              rowData.push(hotInstanceRef.current.getDataAtCell(row, col));
+            }
+            extractedData.push(rowData);
+          }
+          setSelectedData(extractedData);
+        },
       });
     }
     
@@ -240,6 +259,59 @@ const Files = () => {
   
     return rangeData;
   };
+
+  const handleDrawChart = (type) => {
+    setChartType(type);
+    if (selectedData.length > 1) {
+      setChartOpen(true);
+      setTimeout(() => drawChart(type), 100); // Delay to ensure canvas is available
+    } else {
+      alert("Please select at least two rows of data.");
+    }
+  };
+
+  const drawChart = (type) => {
+    if (chartRef.current) {
+      chartRef.current.destroy();
+    }
+    const ctx = document.getElementById("chartCanvas").getContext("2d");
+    const labels = selectedData.slice(1).map((row) => row[0]); // X-axis
+    const data = selectedData.slice(1).map((row) => row[1]); // Y-axis
+
+    const datasets = [
+      {
+        label: selectedData[0][1], // Y-axis label
+        data: data.map((y, index) => ({
+          x: labels[index],
+          y: y,
+        })),
+        borderColor: "blue",
+        backgroundColor: "rgba(0, 0, 255, 0.5)",
+        borderWidth: 2,
+        fill: type === "line",
+      },
+    ];
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels,
+        datasets,
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            type: type === "scatter" ? "linear" : "category",
+            title: { display: true, text: selectedData[0][0] },
+          },
+          y: {
+            title: { display: true, text: selectedData[0][1] },
+          },
+        },
+      },
+    });
+  };
   
 
   const handleApplyFormula = () => {
@@ -292,9 +364,9 @@ const Files = () => {
           <Button><TimerOutlinedIcon/></Button>
           <Button><HeightOutlinedIcon/></Button>
           <Button><LockOutlinedIcon/></Button>
-          <Button><BarChartOutlinedIcon/></Button>
-          <Button><ShowChartOutlinedIcon/></Button>
-          <Button><ScatterPlotOutlinedIcon/></Button>
+          <Button onClick={() => handleDrawChart("bar")}><BarChartOutlinedIcon/></Button>
+          <Button onClick={() => handleDrawChart("line")}><ShowChartOutlinedIcon/></Button>
+          <Button onClick={() => handleDrawChart("scatter")}><ScatterPlotOutlinedIcon/></Button>
         </ButtonGroup>
       </Box>
 
@@ -336,12 +408,12 @@ const Files = () => {
             <InputLabel>Column</InputLabel>
             <Select value={selectedColumn} onChange={(e) => setSelectedColumn(e.target.value)} multiple>
               {columns.map((column) => (
-              <MenuItem key={column} value={column}>{column}</MenuItem>
+              <MenuItem key={column} value={column}><Checkbox checked={selectedColumn.includes(column)}/>{column}</MenuItem>
               ))}
             </Select>
           </FormControl>
           <Box display="flex" sx={{ mt: 3 }} justifyContent="right" gap={2}>
-            <Button variant="contained" color="success" onClick={handleDisplayTable}>Upload</Button>
+            <Button variant="contained" color="success" onClick={handleDisplayTable}>Execute</Button>
             <Button variant="outlined"  color="error" onClick={() => setCloudDownloadDialog(false)}>Cancel</Button>
           </Box>
         </DialogContent>
@@ -371,6 +443,14 @@ const Files = () => {
             <Button onClick={handleApplyFormula} variant="contained" color="success">Apply</Button>
             <Button onClick={() => setFormulaDialog(false)} variant="outlined" color="error">Cancel</Button>
           </Box>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Chart Dialog */}
+      <Dialog open={chartOpen} onClose={() => setChartOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle>{chartType.toUpperCase()} Chart</DialogTitle>
+        <DialogContent>
+          <canvas id="chartCanvas"></canvas>
         </DialogContent>
       </Dialog>
       
