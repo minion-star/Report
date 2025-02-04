@@ -168,10 +168,69 @@ const Files = () => {
           engine: hyperFormulaInstance  // This is the critical part
         },
         autoColumnSize: true,
+        afterChange: (changes) => {
+          if (changes) {
+            changes.forEach(([row, col, oldValue, newValue]) => {
+              if (typeof newValue === 'string' && newValue.startsWith('=VLOOKUP')) {
+                handleVLOOKUPFormula(row, col, newValue);
+              }
+            });
+          }
+        }
       });
     }
     
   }, [files, activeTab]);
+  const customVLOOKUP = (lookupValue, tableRange, colIndex, exactMatch = true) => {
+    for (let i = 0; i < tableRange.length; i++) {
+      if ((exactMatch && tableRange[i][0] === lookupValue) || 
+          (!exactMatch && tableRange[i][0].toString().includes(lookupValue.toString()))) {
+        return tableRange[i][colIndex - 1];  // colIndex is 1-based
+      }
+    }
+    return '#N/A';  // Return if no match found
+  };
+
+  const handleVLOOKUPFormula = (row, col, formula) => {
+    try {
+      const vlookupArgs = formula.match(/VLOOKUP\((.*)\)/i)[1]
+        .split(',')
+        .map(arg => arg.trim());
+  
+      const lookupValue = isNaN(vlookupArgs[0]) ? vlookupArgs[0] : parseFloat(vlookupArgs[0]);
+      const tableRange = getTableRange(vlookupArgs[1]);
+      const colIndex = parseInt(vlookupArgs[2], 10);
+      const exactMatch = vlookupArgs[3]?.toUpperCase() !== 'TRUE';
+  
+      const result = customVLOOKUP(lookupValue, tableRange, colIndex, exactMatch);
+  
+      hotInstanceRef.current.setDataAtCell(row, col, result);
+    } catch (error) {
+      hotInstanceRef.current.setDataAtCell(row, col, '#ERROR');
+    }
+  };
+
+  
+  const getTableRange = (rangeStr) => {
+    const [startCell, endCell] = rangeStr.replace(/\$/g, '').split(':');
+    
+    const startCol = startCell[0].charCodeAt(0) - 65;
+    const startRow = parseInt(startCell.slice(1), 10) - 1;
+    
+    const endCol = endCell[0].charCodeAt(0) - 65;
+    const endRow = parseInt(endCell.slice(1), 10) - 1;
+  
+    const data = hotInstanceRef.current.getData();
+    const rangeData = [];
+  
+    for (let i = startRow; i <= endRow; i++) {
+      const row = data[i].slice(startCol, endCol + 1);
+      rangeData.push(row);
+    }
+  
+    return rangeData;
+  };
+  
 
   const handleApplyFormula = () => {
     if (hotInstanceRef.current && cellInput && formulaInput) {
@@ -179,14 +238,32 @@ const Files = () => {
       if (match) {
         const col = match[1].charCodeAt(0) - 65;
         const row = parseInt(match[2], 10) - 1;
-        hotInstanceRef.current.setDataAtCell(row, col, `=${formulaInput}`);
-        console.log(`Formula applied at (${row}, ${col}): =${formulaInput}`);
+  
+        // Detect if the formula is VLOOKUP
+        if (formulaInput.startsWith('VLOOKUP')) {
+          const vlookupArgs = formulaInput
+            .match(/VLOOKUP\((.*)\)/i)[1]
+            .split(',')
+            .map(arg => arg.trim());
+  
+          const lookupValue = isNaN(vlookupArgs[0]) ? vlookupArgs[0] : parseFloat(vlookupArgs[0]);
+          const tableRange = getTableRange(vlookupArgs[1]);  // Function to extract range
+          const colIndex = parseInt(vlookupArgs[2], 10);
+          const exactMatch = vlookupArgs[3]?.toUpperCase() !== 'TRUE';
+  
+          const result = customVLOOKUP(lookupValue, tableRange, colIndex, exactMatch);
+          hotInstanceRef.current.setDataAtCell(row, col, result);
+        } else {
+          // Handle other formulas like SUM here if needed
+          hotInstanceRef.current.setDataAtCell(row, col, `=${formulaInput}`);
+        }
       }
     }
     setFormulaDialog(false);
     setCellInput('');
     setFormulaInput('');
   };
+  
 
   return (
     <Box m="20px">
