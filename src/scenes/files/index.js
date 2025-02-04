@@ -36,6 +36,15 @@ import { registerAllModules } from 'handsontable/registry'
 import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
+import ShowChartOutlinedIcon from '@mui/icons-material/ShowChartOutlined';
+import ScatterPlotOutlinedIcon from '@mui/icons-material/ScatterPlotOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import BalanceOutlinedIcon from '@mui/icons-material/BalanceOutlined';
+import PercentOutlinedIcon from '@mui/icons-material/PercentOutlined';
+import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
+import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
+import HeightOutlinedIcon from '@mui/icons-material/HeightOutlined';
+
 
 registerAllModules();
 
@@ -274,11 +283,18 @@ const Files = () => {
       <Box display="flex">
         <ButtonGroup variant="contained" component="span" color="success">
           <Button onClick={() => fileInputRef.current.click()}><Upload /></Button>
-          <Button onClick={() => setFormulaDialog(true)}><FunctionsOutlinedIcon/></Button>
-          <Button><BarChartOutlinedIcon/></Button>
-          <Button onClick={() => setCloudDownloadDialog(true)}><CloudDownloadOutlinedIcon /></Button>
-
           <Button><SaveOutlinedIcon/></Button>
+          <Button onClick={() => setCloudDownloadDialog(true)}><CloudDownloadOutlinedIcon /></Button>
+          <Button><CloudUploadOutlinedIcon/></Button>
+          <Button onClick={() => setFormulaDialog(true)}><FunctionsOutlinedIcon/></Button>
+          <Button><PercentOutlinedIcon/></Button>
+          <Button><BalanceOutlinedIcon/></Button>
+          <Button><TimerOutlinedIcon/></Button>
+          <Button><HeightOutlinedIcon/></Button>
+          <Button><LockOutlinedIcon/></Button>
+          <Button><BarChartOutlinedIcon/></Button>
+          <Button><ShowChartOutlinedIcon/></Button>
+          <Button><ScatterPlotOutlinedIcon/></Button>
         </ButtonGroup>
       </Box>
 
@@ -359,7 +375,7 @@ const Files = () => {
       
       {/* Tabs for Uploaded Files and Backend Data */}
       {files.length > 0 && (
-        <AppBar position="static" sx={{ mt: 3, backgroundColor: colors.blueAccent[700] }}>
+        <AppBar position="static" sx={{ mt: 1, backgroundColor: colors.blueAccent[700] }}>
           <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
             {files.map((file, index) => (
               <Tab key={index} label={file.name} sx={{ color: colors.primary[100] }} />
