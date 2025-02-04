@@ -27,6 +27,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { Upload } from "@mui/icons-material";
 import * as XLSX from "xlsx";
 import Handsontable from "handsontable";
+import { HyperFormula } from 'hyperformula';
 import "handsontable/dist/handsontable.full.css";
 import ChatbotDrawer from "./ChatbotDrawer";
 import { tokens } from "../../theme";
@@ -152,6 +153,9 @@ const Files = () => {
       if (hotInstanceRef.current) {
         hotInstanceRef.current.destroy();  // Destroy previous instance
       }
+      const hyperFormulaInstance = HyperFormula.buildEmpty({
+        licenseKey: 'gpl-v3'  // GPL license for non-commercial use
+      });
       hotInstanceRef.current = new Handsontable(hotTableRef.current, {
         data: files[activeTab].data,
         colHeaders: true,
@@ -160,7 +164,9 @@ const Files = () => {
         height: "500px",
         licenseKey: "non-commercial-and-evaluation",
         contextMenu:true,
-        formulas: true,
+        formulas: {
+          engine: hyperFormulaInstance  // This is the critical part
+        },
         autoColumnSize: true,
       });
     }
@@ -174,6 +180,7 @@ const Files = () => {
         const col = match[1].charCodeAt(0) - 65;
         const row = parseInt(match[2], 10) - 1;
         hotInstanceRef.current.setDataAtCell(row, col, `=${formulaInput}`);
+        console.log(`Formula applied at (${row}, ${col}): =${formulaInput}`);
       }
     }
     setFormulaDialog(false);
