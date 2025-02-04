@@ -35,6 +35,7 @@ import Header from "../../components/Header";
 import { registerAllModules } from 'handsontable/registry'
 import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 
 registerAllModules();
 
@@ -274,7 +275,9 @@ const Files = () => {
         <ButtonGroup variant="contained" component="span" color="success">
           <Button onClick={() => fileInputRef.current.click()}><Upload /></Button>
           <Button onClick={() => setFormulaDialog(true)}><FunctionsOutlinedIcon/></Button>
+          <Button><BarChartOutlinedIcon/></Button>
           <Button onClick={() => setCloudDownloadDialog(true)}><CloudDownloadOutlinedIcon /></Button>
+
           <Button><SaveOutlinedIcon/></Button>
         </ButtonGroup>
       </Box>
