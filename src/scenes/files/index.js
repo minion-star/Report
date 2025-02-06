@@ -25,6 +25,7 @@ import {
   Paper,
   DialogActions,
   CircularProgress,
+
   
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
@@ -480,7 +481,14 @@ const Files = () => {
             </Select>
           </FormControl>
           <Box display="flex" sx={{ mt: 3 }} justifyContent="right" gap={2}>
-            <Button variant="contained" color="success" onClick={handleDisplayTable} disabled={isLoading}>{isLoading ? <CircularProgress size={24} sx={{ color: 'white', mr: 1 }} /> : "Execute"}</Button>
+            <Box sx={{ position: 'relative' }}><Button variant="contained" color="success" onClick={handleDisplayTable} disabled={isLoading}>Execute</Button>{isLoading &&<CircularProgress size={20}
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              marginTop: '-12px',
+              marginLeft: '-12px',
+            }} color="success" />}</Box>
             <Button variant="outlined"  color="error" onClick={() => setCloudDownloadDialog(false)}>Cancel</Button>
           </Box>
         </DialogContent>
@@ -569,7 +577,7 @@ const Files = () => {
       {/* Loading */}
       {isLoading && (
         <Box display="flex" justifyContent="center" alignItems="center" height="50px">
-          <CircularProgress />
+          <CircularProgress color="success"/>
         </Box>
       )}
       {/* Handsontable Display */}
