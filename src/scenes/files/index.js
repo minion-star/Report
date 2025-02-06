@@ -44,7 +44,6 @@ import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import ShowChartOutlinedIcon from '@mui/icons-material/ShowChartOutlined';
 import ScatterPlotOutlinedIcon from '@mui/icons-material/ScatterPlotOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import FullscreenExitOutlinedIcon from '@mui/icons-material/FullscreenExitOutlined';
 import BalanceOutlinedIcon from '@mui/icons-material/BalanceOutlined';
 import PercentOutlinedIcon from '@mui/icons-material/PercentOutlined';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
@@ -421,7 +420,6 @@ const Files = () => {
           <Button><TimerOutlinedIcon/></Button>
           <Button><HeightOutlinedIcon/></Button>
           <Button><LockOutlinedIcon/></Button>
-          <Button><FullscreenExitOutlinedIcon/></Button>
           <Button onClick={() => handleDrawChart("bar")}><BarChartOutlinedIcon/></Button>
           <Button onClick={() => handleDrawChart("line")}><ShowChartOutlinedIcon/></Button>
           <Button onClick={() => handleDrawChart("scatter")}><ScatterPlotOutlinedIcon/></Button>
