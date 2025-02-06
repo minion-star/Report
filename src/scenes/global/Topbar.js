@@ -9,6 +9,7 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import FullscreenExitOutlinedIcon from '@mui/icons-material/FullscreenExitOutlined';
+import FullscreenOutlinedIcon from '@mui/icons-material/FullscreenOutlined';
 
 const Topbar = () => {
   const theme = useTheme();
@@ -61,7 +62,9 @@ const Topbar = () => {
 
       {/* ICONS */}
       <Box display="flex">
-        <IconButton onClick={toggleFullscreen}><FullscreenExitOutlinedIcon/></IconButton>
+        <IconButton onClick={toggleFullscreen}>
+          {isFullscreen === true ? (<FullscreenExitOutlinedIcon/>) : (<FullscreenOutlinedIcon/>)}
+          </IconButton>
         <IconButton onClick={colorMode.toggleColorMode}>
           {theme.palette.mode === "dark" ? (
             <DarkModeOutlinedIcon />
