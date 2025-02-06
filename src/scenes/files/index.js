@@ -72,10 +72,13 @@ function PaperComponent(props) {
 const Files = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const maxRows = 20;
+  const maxCols = 30;
+  const emptyData = Array.from({ length: maxRows }, () => Array(maxCols).fill(''));
 
   const [files, setFiles] = useState(() => {
     const savedFiles = localStorage.getItem("spreadsheetTabs");
-    return savedFiles ? JSON.parse(savedFiles) : [{ name: "Sheet1", data: [[]] }];
+    return savedFiles ? JSON.parse(savedFiles) : [{ name: "Sheet1", data: emptyData }];
   });
 
   const [activeTab, setActiveTab] = useState(0);
@@ -239,6 +242,8 @@ const Files = () => {
     }
     
   }, [files, activeTab]);
+
+
   const customVLOOKUP = (lookupValue, tableRange, colIndex, exactMatch = true) => {
     for (let i = 0; i < tableRange.length; i++) {
       if ((exactMatch && tableRange[i][0] === lookupValue) || 
@@ -377,7 +382,8 @@ const Files = () => {
   
 
   const addNewTab = () => {
-    setFiles((prev) => [...prev, { name: `Sheet${prev.length + 1}`, data: [[]] }]);
+    
+    setFiles((prevFiles) => [...prevFiles, { name: `Sheet${prevFiles.length + 1}`, data: emptyData }]);
     setActiveTab(files.length);
   };
 
