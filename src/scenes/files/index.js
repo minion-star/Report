@@ -23,6 +23,8 @@ import {
   DialogActions,
   Checkbox,
   ListItem,
+  Paper,
+  
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
 import CloseIcon from "@mui/icons-material/Close";
@@ -35,12 +37,14 @@ import ChatbotDrawer from "./ChatbotDrawer";
 import { tokens } from "../../theme";
 import Header from "../../components/Header";
 import { registerAllModules } from 'handsontable/registry'
+import Draggable from 'react-draggable';
 import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import ShowChartOutlinedIcon from '@mui/icons-material/ShowChartOutlined';
 import ScatterPlotOutlinedIcon from '@mui/icons-material/ScatterPlotOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import FullscreenExitOutlinedIcon from '@mui/icons-material/FullscreenExitOutlined';
 import BalanceOutlinedIcon from '@mui/icons-material/BalanceOutlined';
 import PercentOutlinedIcon from '@mui/icons-material/PercentOutlined';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
@@ -50,6 +54,18 @@ import Chart from "chart.js/auto";
 
 registerAllModules();
 
+function PaperComponent(props) {
+  const nodeRef = React.useRef(null);
+  return (
+    <Draggable
+      nodeRef={nodeRef}
+      handle="#draggable-dialog-title"
+      cancel={'[class*="MuiDialogContent-root"]'}
+    >
+      <Paper {...props} ref={nodeRef} />
+    </Draggable>
+  );
+}
 
 const Files = () => {
   const theme = useTheme();
@@ -364,6 +380,7 @@ const Files = () => {
           <Button><TimerOutlinedIcon/></Button>
           <Button><HeightOutlinedIcon/></Button>
           <Button><LockOutlinedIcon/></Button>
+          <Button><FullscreenExitOutlinedIcon/></Button>
           <Button onClick={() => handleDrawChart("bar")}><BarChartOutlinedIcon/></Button>
           <Button onClick={() => handleDrawChart("line")}><ShowChartOutlinedIcon/></Button>
           <Button onClick={() => handleDrawChart("scatter")}><ScatterPlotOutlinedIcon/></Button>
@@ -371,7 +388,7 @@ const Files = () => {
       </Box>
 
       {/* Dialog for Google Cloud Download */}
-      <Dialog open={cloudDownloadDialog} onClose={() => {}} sx={{borderRadius:"16px",  "& .MuiDialog-paper": { width: "400px", height: "auto" },}}>
+      <Dialog open={cloudDownloadDialog} onClose={() => {}} sx={{borderRadius:"16px",  "& .MuiDialog-paper": { width: "400px", height: "auto" },}} PaperComponent={PaperComponent}>
         <Box sx={{display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -380,14 +397,16 @@ const Files = () => {
           padding: "8px 8px",
           borderTopLeftRadius: "4px",
           borderTopRightRadius: "4px",
+          cursor:"move"
         }}
+        id="draggable-dialog-title"
         >
           <Typography variant="h6">Download from Google Cloud</Typography>
             <IconButton aria-label="close" color="inherit" onClick={() => setCloudDownloadDialog(false)}>
               <CloseIcon />
             </IconButton>
         </Box>
-        <DialogContent>
+        <DialogContent id="download-cloud-big-query">
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Schema</InputLabel>
             <Select value={selectedSchema} onChange={(e) => setSelectedSchema(e.target.value)}>
