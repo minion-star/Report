@@ -71,7 +71,11 @@ const Files = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState(() => {
+    const savedFiles = localStorage.getItem("spreadsheetTabs");
+    return savedFiles ? JSON.parse(savedFiles) : [{ name: "Sheet1", data: [[]] }];
+  });
+
   const [activeTab, setActiveTab] = useState(0);
   const [formulaDialog, setFormulaDialog] = useState(false);
   const [cloudDownloadDialog, setCloudDownloadDialog] = useState(false);
@@ -92,6 +96,9 @@ const Files = () => {
   const [chartType, setChartType] = useState("line"); // Default to Line chart
   const [chartOpen, setChartOpen] = useState(false)
 
+  useEffect(() => {
+    localStorage.setItem("spreadsheetTabs", JSON.stringify(files));
+  }, [files]);
 
   useEffect(() => {
     // Fetch schemas from API
@@ -149,7 +156,6 @@ const Files = () => {
       );
   
       const backendData = response.data;
-      console.log(backendData);
       // Convert backend data into a 2D array for Handsontable (add headers as the first row)
       const headers = selectedColumn;
       const formattedData = [headers, ...backendData.map((row) => headers.map((col) => row[col]))];
