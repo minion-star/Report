@@ -536,7 +536,7 @@ const Files = () => {
       {/* Tabs for Uploaded Files and Backend Data */}
       {files.length > 0 && (
         <AppBar position="static" sx={{ mt: 1, backgroundColor: colors.blueAccent[700] }}>
-          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} variant="scrollable">
             {files.map((file, index) => (
               <Tab key={index} label={
                 <Box display="flex" alignItems="center">
