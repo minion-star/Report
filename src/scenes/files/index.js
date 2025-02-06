@@ -51,6 +51,7 @@ import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import HeightOutlinedIcon from '@mui/icons-material/HeightOutlined';
 import Chart from "chart.js/auto";
+import AddIcon from"@mui/icons-material/Add"
 
 registerAllModules();
 
@@ -369,6 +370,16 @@ const Files = () => {
   };
   
 
+  const addNewTab = () => {
+    setFiles((prev) => [...prev, { name: `Sheet${prev.length + 1}`, data: [[]] }]);
+    setActiveTab(files.length);
+  };
+
+  const removeTab = (index) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setActiveTab(Math.max(0, index - 1));
+  };
+
   return (
     <Box m="20px">
       <Header title="FILES" subtitle="Manage and View Your Excel Files" />
@@ -484,8 +495,16 @@ const Files = () => {
         <AppBar position="static" sx={{ mt: 1, backgroundColor: colors.blueAccent[700] }}>
           <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
             {files.map((file, index) => (
-              <Tab key={index} label={file.name} sx={{ color: colors.primary[100] }} />
+              <Tab key={index} label={
+                <Box display="flex" alignItems="center">
+                  {file.name}
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeTab(index); }} sx={{ml:3}}>
+                    <CloseIcon fontSize="small" sx={{ ml: 0}} />
+                  </IconButton>
+                </Box>
+              } sx={{ color: colors.primary[100] }} />
             ))}
+            <Button onClick={addNewTab}><AddIcon /></Button>
           </Tabs>
         </AppBar>
       )}
