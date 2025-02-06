@@ -452,7 +452,7 @@ const Files = () => {
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Table</InputLabel>
-            <Select value={selectedTable} onChange={(e) => setSelectedTable(e.target.value)}>
+            <Select value={selectedTable} onChange={(e) =>{setSelectedTable(e.target.value); setSelectedColumn([]);} }>
               {tables.map((table) => (
               <MenuItem key={table} value={table}>{table}</MenuItem>
               ))}
