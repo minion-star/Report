@@ -577,7 +577,19 @@ const Files = () => {
 
       {/* Loading */}
       {isLoading && (
-        <Box display="flex" justifyContent="center" alignItems="center" height="50px">
+        <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1300, // Ensures it appears above all other elements
+        }}
+        >
           <CircularProgress color="success"/>
         </Box>
       )}
