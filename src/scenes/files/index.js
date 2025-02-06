@@ -509,12 +509,28 @@ const Files = () => {
       </Dialog>
       {/* Update the tab or Upload new tab */}
       <Dialog open={warningDialogOpen} onClose={() => setWarningDialogOpen(false)}>
-        <DialogTitle>Warining</DialogTitle>
+        <Box sx={{display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          backgroundColor: "green",
+          color: "white",
+          padding: "8px 8px",
+          borderTopLeftRadius: "4px",
+          borderTopRightRadius: "4px",
+          cursor:"move"
+        }}
+        id="draggable-dialog-warning"
+        >
+            <Typography variant="h6" marginLeft={"4px"}>Warning</Typography>
+            <IconButton aria-label="close" color="inherit" onClick={() => setWarningDialogOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+        </Box>
         <DialogContent>Would you like to update the existing tab or create a new one?</DialogContent>
         <DialogActions>
-          <Button onClick={() => handleDialogClose('update')}>Update</Button>
-          <Button onClick={() => handleDialogClose('new')}>New Tab</Button>
-          <Button onClick={() => setWarningDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => handleDialogClose('update')} color="success" variant="contained">Update</Button>
+          <Button onClick={() => handleDialogClose('new')} color="success" variant="outlined">New Tab</Button>
+          <Button onClick={() => setWarningDialogOpen(false)} color="error" variant="outlined">Cancel</Button>
         </DialogActions>
       </Dialog>
       {/* Tabs for Uploaded Files and Backend Data */}
