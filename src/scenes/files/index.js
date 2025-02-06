@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, createContext } from "react";
+import React, { useState, useRef, useEffect, } from "react";
 import axios from "axios";
 import {
   Box,
@@ -20,10 +20,10 @@ import {
   FormControl,
   InputLabel,
   Typography,
-  DialogActions,
   Checkbox,
   ListItem,
   Paper,
+  DialogActions,
   
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
@@ -53,6 +53,7 @@ import HeightOutlinedIcon from '@mui/icons-material/HeightOutlined';
 import Chart from "chart.js/auto";
 import AddIcon from"@mui/icons-material/Add"
 
+
 registerAllModules();
 
 function PaperComponent(props) {
@@ -78,6 +79,7 @@ const Files = () => {
   });
 
   const [activeTab, setActiveTab] = useState(0);
+  const [dialogAction, setDialogAction] = useState(null);
   const [formulaDialog, setFormulaDialog] = useState(false);
   const [cloudDownloadDialog, setCloudDownloadDialog] = useState(false);
   const [cellInput, setCellInput] = useState('');
@@ -96,6 +98,7 @@ const Files = () => {
   const [selectedData, setSelectedData] = useState([]);
   const [chartType, setChartType] = useState("line"); // Default to Line chart
   const [chartOpen, setChartOpen] = useState(false)
+  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("spreadsheetTabs", JSON.stringify(files));
@@ -162,11 +165,13 @@ const Files = () => {
       const formattedData = [headers, ...backendData.map((row) => headers.map((col) => row[col]))];
   
       // Add backend data as a new tab
-      setFiles((prevFiles) => [...prevFiles, { name: `Backend Data - ${new Date().toLocaleTimeString()}`, data: formattedData }]);
+//      setFiles((prevFiles) => [...prevFiles, { name: `Backend Data - ${new Date().toLocaleTimeString()}`, data: formattedData }]);
   
       // Automatically switch to the new tab
-      setActiveTab(files.length);  // Since a new file is added at the end
+//      setActiveTab(files.length);  // Since a new file is added at the end
       setCloudDownloadDialog(false);
+      setWarningDialogOpen(true);
+      setDialogAction({ type: 'backend', file: { name: `Backend Data - ${new Date().toLocaleTimeString()}`, data: formattedData } });
     } catch (error) {
       console.error("Error fetching data:", error);
 
@@ -183,7 +188,8 @@ const Files = () => {
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
-        setFiles((prev) => [...prev, { name: file.name, data: sheet }]);
+        setWarningDialogOpen(true);
+        setDialogAction({ type: 'upload', file: { name: file.name, data: sheet } });
       };
       reader.readAsArrayBuffer(file);
     });
@@ -380,6 +386,18 @@ const Files = () => {
     setActiveTab(Math.max(0, index - 1));
   };
 
+  const handleDialogClose = (action) => {
+    if (action === 'new') {
+      setFiles((prevFiles) => [...prevFiles, dialogAction.file]);
+      setActiveTab(files.length);
+    } else if (action === 'update') {
+      setFiles((prevFiles) => prevFiles.map((f, index) => (index === activeTab ? dialogAction.file : f)));
+    }
+    setWarningDialogOpen(false);
+    setDialogAction(null);
+  };
+
+
   return (
     <Box m="20px">
       <Header title="FILES" subtitle="Manage and View Your Excel Files" />
@@ -489,7 +507,16 @@ const Files = () => {
           <canvas id="chartCanvas"></canvas>
         </DialogContent>
       </Dialog>
-      
+      {/* Update the tab or Upload new tab */}
+      <Dialog open={warningDialogOpen} onClose={() => setWarningDialogOpen(false)}>
+        <DialogTitle>Warining</DialogTitle>
+        <DialogContent>Would you like to update the existing tab or create a new one?</DialogContent>
+        <DialogActions>
+          <Button onClick={() => handleDialogClose('update')}>Update</Button>
+          <Button onClick={() => handleDialogClose('new')}>New Tab</Button>
+          <Button onClick={() => setWarningDialogOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
       {/* Tabs for Uploaded Files and Backend Data */}
       {files.length > 0 && (
         <AppBar position="static" sx={{ mt: 1, backgroundColor: colors.blueAccent[700] }}>
