@@ -24,6 +24,7 @@ import {
   ListItem,
   Paper,
   DialogActions,
+  CircularProgress,
   
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
@@ -101,6 +102,7 @@ const Files = () => {
   const [chartType, setChartType] = useState("line"); // Default to Line chart
   const [chartOpen, setChartOpen] = useState(false)
   const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("spreadsheetTabs", JSON.stringify(files));
@@ -154,6 +156,7 @@ const Files = () => {
       console.log("Please select at least one column.");
       return;
     }
+    setIsLoading(true);
   
     try {
       const response = await axios.post(
@@ -177,6 +180,8 @@ const Files = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
 
+    } finally {
+      setIsLoading(false);  // Stop loading
     }
   };
 
@@ -202,7 +207,9 @@ const Files = () => {
       if (hotInstanceRef.current) {
         hotInstanceRef.current.destroy();  // Destroy previous instance
       }
-      const hyperFormulaInstance = HyperFormula.buildEmpty({
+      setIsLoading(true);
+      setTimeout(()=>{
+        const hyperFormulaInstance = HyperFormula.buildEmpty({
         licenseKey: 'gpl-v3'  // GPL license for non-commercial use
       });
       hotInstanceRef.current = new Handsontable(hotTableRef.current, {
@@ -237,7 +244,9 @@ const Files = () => {
           }
           setSelectedData(extractedData);
         },
-      });
+        
+      }); setIsLoading(false);
+      },2000)
     }
     
   }, [files, activeTab]);
@@ -406,7 +415,7 @@ const Files = () => {
   return (
     <Box m="20px">
       <Header title="FILES" subtitle="Manage and View Your Excel Files" />
-
+       
       {/* Buttons Section */}
       <Box display="flex">
         <ButtonGroup variant="contained" component="span" color="success">
@@ -471,7 +480,7 @@ const Files = () => {
             </Select>
           </FormControl>
           <Box display="flex" sx={{ mt: 3 }} justifyContent="right" gap={2}>
-            <Button variant="contained" color="success" onClick={handleDisplayTable}>Execute</Button>
+            <Button variant="contained" color="success" onClick={handleDisplayTable} disabled={isLoading}>{isLoading ? <CircularProgress size={24} sx={{ color: 'white', mr: 1 }} /> : "Execute"}</Button>
             <Button variant="outlined"  color="error" onClick={() => setCloudDownloadDialog(false)}>Cancel</Button>
           </Box>
         </DialogContent>
@@ -498,7 +507,7 @@ const Files = () => {
             onChange={(e) => setFormulaInput(e.target.value)}
           />
           <Box display="flex" sx={{ mt: 3 }} justifyContent="right" gap={2}>
-            <Button onClick={handleApplyFormula} variant="contained" color="success">Apply</Button>
+            <Button onClick={handleApplyFormula} variant="contained" color="success" >Apply</Button>
             <Button onClick={() => setFormulaDialog(false)} variant="outlined" color="error">Cancel</Button>
           </Box>
         </DialogContent>
@@ -537,6 +546,7 @@ const Files = () => {
           <Button onClick={() => setWarningDialogOpen(false)} color="error" variant="outlined">Cancel</Button>
         </DialogActions>
       </Dialog>
+       
       {/* Tabs for Uploaded Files and Backend Data */}
       {files.length > 0 && (
         <AppBar position="static" sx={{ mt: 1, backgroundColor: colors.blueAccent[700] }}>
@@ -556,7 +566,12 @@ const Files = () => {
         </AppBar>
       )}
 
-      
+      {/* Loading */}
+      {isLoading && (
+        <Box display="flex" justifyContent="center" alignItems="center" height="50px">
+          <CircularProgress />
+        </Box>
+      )}
       {/* Handsontable Display */}
       <Box ref={hotTableRef} />
 
