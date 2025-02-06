@@ -104,6 +104,7 @@ const Files = () => {
   const [chartOpen, setChartOpen] = useState(false)
   const [warningDialogOpen, setWarningDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingCloudDownload, setIsCloudDownload] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("spreadsheetTabs", JSON.stringify(files));
@@ -157,7 +158,7 @@ const Files = () => {
       console.log("Please select at least one column.");
       return;
     }
-    setIsLoading(true);
+    setIsCloudDownload(true);
   
     try {
       const response = await axios.post(
@@ -182,7 +183,7 @@ const Files = () => {
       console.error("Error fetching data:", error);
 
     } finally {
-      setIsLoading(false);  // Stop loading
+      setIsCloudDownload(false);  // Stop loading
     }
   };
 
@@ -481,7 +482,7 @@ const Files = () => {
             </Select>
           </FormControl>
           <Box display="flex" sx={{ mt: 3 }} justifyContent="right" gap={2}>
-            <Box sx={{ position: 'relative' }}><Button variant="contained" color="success" onClick={handleDisplayTable} disabled={isLoading}>Execute</Button>{isLoading &&<CircularProgress size={20}
+            <Box sx={{ position: 'relative' }}><Button variant="contained" color="success" onClick={handleDisplayTable} disabled={isLoadingCloudDownload}>Execute</Button>{isLoadingCloudDownload &&<CircularProgress size={20}
             sx={{
               position: 'absolute',
               top: '50%',
