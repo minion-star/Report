@@ -25,8 +25,6 @@ import {
   Paper,
   DialogActions,
   CircularProgress,
-
-  
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
 import CloseIcon from "@mui/icons-material/Close";
@@ -51,8 +49,11 @@ import PercentOutlinedIcon from '@mui/icons-material/PercentOutlined';
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import HeightOutlinedIcon from '@mui/icons-material/HeightOutlined';
-import Chart from "chart.js/auto";
+import AnalyticsOutlinedIcon from '@mui/icons-material/AnalyticsOutlined';
 import AddIcon from"@mui/icons-material/Add"
+import ScatterChart from "./graphs/scatter";
+import BarChart from "./graphs/bar";
+import LineChart from "./graphs/line";
 
 
 registerAllModules();
@@ -73,8 +74,8 @@ function PaperComponent(props) {
 const Files = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const maxRows = 20;
-  const maxCols = 30;
+  const maxRows = 25;
+  const maxCols = 25;
   const emptyData = Array.from({ length: maxRows }, () => Array(maxCols).fill(''));
 
   const [files, setFiles] = useState(() => {
@@ -98,13 +99,13 @@ const Files = () => {
   const [tables, setTables] = useState([]);
   const [selectedColumn, setSelectedColumn] = useState([]);
   const [columns, setColumns] = useState([]);
-  const chartRef = useRef(null);
   const [selectedData, setSelectedData] = useState([]);
-  const [chartType, setChartType] = useState("line"); // Default to Line chart
-  const [chartOpen, setChartOpen] = useState(false)
+  const [charts, setCharts] = useState([]); // Default to Line chart
   const [warningDialogOpen, setWarningDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCloudDownload, setIsCloudDownload] = useState(false);
+  const [isTab, setIsTab] = useState(false);
+  const [isAnalytics, setIsAnalytics] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("spreadsheetTabs", JSON.stringify(files));
@@ -169,7 +170,10 @@ const Files = () => {
       const backendData = response.data;
       // Convert backend data into a 2D array for Handsontable (add headers as the first row)
       const headers = selectedColumn;
-      const formattedData = [headers, ...backendData.map((row) => headers.map((col) => row[col]))];
+      let formattedData = [headers, ...backendData.map(row => headers.map(col => row[col]))];
+
+      // Ensure minimum rows/columns
+      formattedData = ensureMinimumSize(formattedData);
   
       // Add backend data as a new tab
 //      setFiles((prevFiles) => [...prevFiles, { name: `Backend Data - ${new Date().toLocaleTimeString()}`, data: formattedData }]);
@@ -196,7 +200,10 @@ const Files = () => {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
-        const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+        let sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+
+        // Ensure minimum rows/columns
+        sheet = ensureMinimumSize(sheet);
         setWarningDialogOpen(true);
         setDialogAction({ type: 'upload', file: { name: file.name, data: sheet } });
       };
@@ -231,8 +238,10 @@ const Files = () => {
         afterChange: (changes) => {
           if (changes) {
             changes.forEach(([row, col, oldValue, newValue]) => {
-              if (typeof newValue === 'string' && newValue.startsWith('=VLOOKUP')) {
-                handleVLOOKUPFormula(row, col, newValue);
+              if (typeof newValue === 'string') {
+                if (newValue.startsWith('=VLOOKUP') || newValue.startsWith('=HLOOKUP')) {
+                  handleFormula(row, col, newValue);
+                }
               }
             });
           }
@@ -255,7 +264,20 @@ const Files = () => {
     
   }, [files, activeTab]);
 
-
+  const ensureMinimumSize = (data, minRows = 25, minCols = 25) => {
+    const rows = data.length;
+    const cols = data[0]?.length || 0;
+  
+    // Ensure there are at least `minCols` columns
+    const extendedData = data.map(row => [...row, ...Array(Math.max(0, minCols - cols)).fill('')]);
+  
+    // Ensure there are at least `minRows` rows
+    while (extendedData.length < minRows) {
+      extendedData.push(Array(minCols).fill(''));
+    }
+  
+    return extendedData;
+  };
   const customVLOOKUP = (lookupValue, tableRange, colIndex, exactMatch = true) => {
     for (let i = 0; i < tableRange.length; i++) {
       if ((exactMatch && tableRange[i][0] === lookupValue) || 
@@ -263,27 +285,50 @@ const Files = () => {
         return tableRange[i][colIndex - 1];  // colIndex is 1-based
       }
     }
-    return '#N/A';  // Return if no match found
-  };
+    return '#N/A';  // No match found
+};
 
-  const handleVLOOKUPFormula = (row, col, formula) => {
+const customHLOOKUP = (lookupValue, tableRange, rowIndex, exactMatch = true) => {
+    if (tableRange.length === 0) return '#N/A';
+
+    const headerRow = tableRange[0]; // First row is the lookup row
+    for (let col = 0; col < headerRow.length; col++) {
+      if ((exactMatch && headerRow[col] === lookupValue) || 
+          (!exactMatch && headerRow[col].toString().includes(lookupValue.toString()))) {
+        return tableRange[rowIndex - 1][col];  // rowIndex is 1-based
+      }
+    }
+    return '#N/A';  // No match found
+};
+
+const handleFormula = (row, col, formula) => {
     try {
-      const vlookupArgs = formula.match(/VLOOKUP\((.*)\)/i)[1]
-        .split(',')
-        .map(arg => arg.trim());
+      const isVLOOKUP = formula.startsWith('=VLOOKUP');
+      const isHLOOKUP = formula.startsWith('=HLOOKUP');
   
-      const lookupValue = isNaN(vlookupArgs[0]) ? vlookupArgs[0] : parseFloat(vlookupArgs[0]);
-      const tableRange = getTableRange(vlookupArgs[1]);
-      const colIndex = parseInt(vlookupArgs[2], 10);
-      const exactMatch = vlookupArgs[3]?.toUpperCase() !== 'TRUE';
+      if (isVLOOKUP || isHLOOKUP) {
+        const args = formula.match(/\((.*)\)/i)[1]
+          .split(',')
+          .map(arg => arg.trim());
   
-      const result = customVLOOKUP(lookupValue, tableRange, colIndex, exactMatch);
+        const lookupValue = isNaN(args[0]) ? args[0] : parseFloat(args[0]);
+        const tableRange = getTableRange(args[1]);
+        const index = parseInt(args[2], 10);
+        const exactMatch = args[3]?.toUpperCase() !== 'TRUE';
   
-      hotInstanceRef.current.setDataAtCell(row, col, result);
+        let result;
+        if (isVLOOKUP) {
+          result = customVLOOKUP(lookupValue, tableRange, index, exactMatch);
+        } else {
+          result = customHLOOKUP(lookupValue, tableRange, index, exactMatch);
+        }
+  
+        hotInstanceRef.current.setDataAtCell(row, col, result);
+      }
     } catch (error) {
       hotInstanceRef.current.setDataAtCell(row, col, '#ERROR');
     }
-  };
+};
 
   
   const getTableRange = (rangeStr) => {
@@ -307,58 +352,18 @@ const Files = () => {
   };
 
   const handleDrawChart = (type) => {
-    setChartType(type);
     if (selectedData.length > 1) {
-      setChartOpen(true);
-      setTimeout(() => drawChart(type), 100); // Delay to ensure canvas is available
+      const labels = selectedData.slice(1).map((row) => row[0]); // X-axis
+      const data = selectedData.slice(1).map((row) => row[1]); // Y-axis
+
+      setCharts((prevCharts) => [
+        ...prevCharts,
+        { type, labels, data, id: `chart-${prevCharts.length + 1}` },
+      ]);
     } else {
       alert("Please select at least two rows of data.");
     }
   };
-
-  const drawChart = (type) => {
-    if (chartRef.current) {
-      chartRef.current.destroy();
-    }
-    const ctx = document.getElementById("chartCanvas").getContext("2d");
-    const labels = selectedData.slice(1).map((row) => row[0]); // X-axis
-    const data = selectedData.slice(1).map((row) => row[1]); // Y-axis
-
-    const datasets = [
-      {
-        label: selectedData[0][1], // Y-axis label
-        data: data.map((y, index) => ({
-          x: labels[index],
-          y: y,
-        })),
-        borderColor: "blue",
-        backgroundColor: "rgba(0, 0, 255, 0.5)",
-        borderWidth: 2,
-        fill: type === "line",
-      },
-    ];
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: {
-        labels,
-        datasets,
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: {
-            type: type === "scatter" ? "linear" : "category",
-            title: { display: true, text: selectedData[0][0] },
-          },
-          y: {
-            title: { display: true, text: selectedData[0][1] },
-          },
-        },
-      },
-    });
-  };
-  
 
   const handleApplyFormula = () => {
     if (hotInstanceRef.current && cellInput && formulaInput) {
@@ -400,7 +405,9 @@ const Files = () => {
   };
 
   const removeTab = (index) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setFiles((prev) => {
+      return prev.filter((_, i) => i !== index);
+    });
     setActiveTab(Math.max(0, index - 1));
   };
 
@@ -415,13 +422,15 @@ const Files = () => {
     setDialogAction(null);
   };
 
+  useEffect(() => {
+    setIsTab(files.length <= 1);
+  }, [files]);
 
   return (
     <Box m="20px">
       <Header title="FILES" subtitle="Manage and View Your Excel Files" />
-       
       {/* Buttons Section */}
-      <Box display="flex">
+      <Box display="flex" sx={{position: "absolute", top: 16, right: 300, height:36}}>
         <ButtonGroup variant="contained" component="span" color="success">
           <Button onClick={() => fileInputRef.current.click()}><Upload /></Button>
           <Button><SaveOutlinedIcon/></Button>
@@ -433,12 +442,83 @@ const Files = () => {
           <Button><TimerOutlinedIcon/></Button>
           <Button><HeightOutlinedIcon/></Button>
           <Button><LockOutlinedIcon/></Button>
+          <Button><AnalyticsOutlinedIcon/></Button>
           <Button onClick={() => handleDrawChart("bar")}><BarChartOutlinedIcon/></Button>
           <Button onClick={() => handleDrawChart("line")}><ShowChartOutlinedIcon/></Button>
           <Button onClick={() => handleDrawChart("scatter")}><ScatterPlotOutlinedIcon/></Button>
         </ButtonGroup>
-      </Box>
+      </Box>  
+      {/* Tabs for Uploaded Files and Backend Data */}
+      {files.length > 0 && (
+        <AppBar position="static" sx={{ mt: 1, backgroundColor: colors.blueAccent[700] }}>
+          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} variant="scrollable">
+            {files.map((file, index) => (
+              <Tab key={index} label={
+                <Box display="flex" alignItems="center">
+                  {file.name}
+                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeTab(index); }} sx={{ml:3}} disabled={isTab}>
+                    <CloseIcon fontSize="small" sx={{ ml: 0}} />
+                  </IconButton>
+                </Box>
+              } sx={{ color: colors.primary[100] }} />
+            ))}
+            <Button onClick={addNewTab}><AddIcon /></Button>
+          </Tabs>
+        </AppBar>
+      )}
 
+      {/* Loading */}
+      {isLoading && (
+        <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1300, // Ensures it appears above all other elements
+        }}
+        >
+          <CircularProgress color="success"/>
+        </Box>
+      )}
+      {/* Handsontable Display */}
+      {charts.map((chart) => (
+        <div key={chart.id}>
+          {chart.type === "bar" && <BarChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
+          {chart.type === "line" && <LineChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
+          {chart.type === "scatter" && <ScatterChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
+        </div>
+      ))}
+      <Box ref={hotTableRef} />
+      
+      {/* File Upload Input */}
+      <input
+        ref={fileInputRef}
+        accept=".xlsx, .xls"
+        style={{ display: "none" }}
+        multiple
+        type="file"
+        onChange={handleFileUpload}
+      />
+
+      {/* Chatbot Button */}
+      <IconButton
+        sx={{
+          position: "absolute",
+          bottom: 16,
+          right: 16,
+          backgroundColor: colors.primary[400],
+          "&:hover": { backgroundColor: colors.blueAccent[400] },
+        }}
+        onClick={() => setOpen(true)}
+        size="small"
+      >
+        <Avatar alt="chatbot" src="/chatbot.png" />
+      </IconButton>
       {/* Dialog for Google Cloud Download */}
       <Dialog open={cloudDownloadDialog} onClose={() => {}} sx={{borderRadius:"16px",  "& .MuiDialog-paper": { width: "400px", height: "auto" },}} PaperComponent={PaperComponent}>
         <Box sx={{display: "flex",
@@ -524,13 +604,6 @@ const Files = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Chart Dialog */}
-      <Dialog open={chartOpen} onClose={() => setChartOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>{chartType.toUpperCase()} Chart</DialogTitle>
-        <DialogContent>
-          <canvas id="chartCanvas"></canvas>
-        </DialogContent>
-      </Dialog>
       {/* Update the tab or Upload new tab */}
       <Dialog open={warningDialogOpen} onClose={() => setWarningDialogOpen(false)}>
         <Box sx={{display: "flex",
@@ -557,71 +630,6 @@ const Files = () => {
           <Button onClick={() => setWarningDialogOpen(false)} color="error" variant="outlined">Cancel</Button>
         </DialogActions>
       </Dialog>
-       
-      {/* Tabs for Uploaded Files and Backend Data */}
-      {files.length > 0 && (
-        <AppBar position="static" sx={{ mt: 1, backgroundColor: colors.blueAccent[700] }}>
-          <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)} variant="scrollable">
-            {files.map((file, index) => (
-              <Tab key={index} label={
-                <Box display="flex" alignItems="center">
-                  {file.name}
-                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); removeTab(index); }} sx={{ml:3}}>
-                    <CloseIcon fontSize="small" sx={{ ml: 0}} />
-                  </IconButton>
-                </Box>
-              } sx={{ color: colors.primary[100] }} />
-            ))}
-            <Button onClick={addNewTab}><AddIcon /></Button>
-          </Tabs>
-        </AppBar>
-      )}
-
-      {/* Loading */}
-      {isLoading && (
-        <Box
-        sx={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 1300, // Ensures it appears above all other elements
-        }}
-        >
-          <CircularProgress color="success"/>
-        </Box>
-      )}
-      {/* Handsontable Display */}
-      <Box ref={hotTableRef} />
-
-      {/* File Upload Input */}
-      <input
-        ref={fileInputRef}
-        accept=".xlsx, .xls"
-        style={{ display: "none" }}
-        multiple
-        type="file"
-        onChange={handleFileUpload}
-      />
-
-      {/* Chatbot Button */}
-      <IconButton
-        sx={{
-          position: "absolute",
-          bottom: 16,
-          right: 16,
-          backgroundColor: colors.primary[400],
-          "&:hover": { backgroundColor: colors.blueAccent[400] },
-        }}
-        onClick={() => setOpen(true)}
-        size="small"
-      >
-        <Avatar alt="chatbot" src="/chatbot.png" />
-      </IconButton>
 
       {/* Chatbot Drawer */}
       <Drawer
