@@ -25,7 +25,7 @@ import {
   Paper,
   DialogActions,
   CircularProgress,
-  LinearProgress,
+
   
 } from "@mui/material";
 import CloudDownloadOutlinedIcon from "@mui/icons-material/CloudDownloadOutlined";
@@ -104,6 +104,7 @@ const Files = () => {
   const [chartOpen, setChartOpen] = useState(false)
   const [warningDialogOpen, setWarningDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingCloudDownload, setIsCloudDownload] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("spreadsheetTabs", JSON.stringify(files));
@@ -157,7 +158,7 @@ const Files = () => {
       console.log("Please select at least one column.");
       return;
     }
-    setIsLoading(true);
+    setIsCloudDownload(true);
   
     try {
       const response = await axios.post(
@@ -182,7 +183,7 @@ const Files = () => {
       console.error("Error fetching data:", error);
 
     } finally {
-      setIsLoading(false);  // Stop loading
+      setIsCloudDownload(false);  // Stop loading
     }
   };
 
@@ -221,6 +222,8 @@ const Files = () => {
         height: "500px",
         licenseKey: "non-commercial-and-evaluation",
         contextMenu:true,
+        filters:true,
+        dropdownMenu:true,
         formulas: {
           engine: hyperFormulaInstance  // This is the critical part
         },
@@ -481,7 +484,14 @@ const Files = () => {
             </Select>
           </FormControl>
           <Box display="flex" sx={{ mt: 3 }} justifyContent="right" gap={2}>
-            <Button variant="contained" color="success" onClick={handleDisplayTable} disabled={isLoading}>Execute</Button>{isLoading &&<CircularProgress size={24} sx={{ color: 'white', mr: 1 }} />}
+            <Box sx={{ position: 'relative' }}><Button variant="contained" color="success" onClick={handleDisplayTable} disabled={isLoadingCloudDownload}>Execute</Button>{isLoadingCloudDownload &&<CircularProgress size={20}
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              marginTop: '-12px',
+              marginLeft: '-12px',
+            }} color="success" />}</Box>
             <Button variant="outlined"  color="error" onClick={() => setCloudDownloadDialog(false)}>Cancel</Button>
           </Box>
         </DialogContent>
@@ -569,8 +579,20 @@ const Files = () => {
 
       {/* Loading */}
       {isLoading && (
-        <Box display="flex" justifyContent="center" alignItems="center" height="50px">
-          <LinearProgress/>
+        <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1300, // Ensures it appears above all other elements
+        }}
+        >
+          <CircularProgress color="success"/>
         </Box>
       )}
       {/* Handsontable Display */}
