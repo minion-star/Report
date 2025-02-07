@@ -228,7 +228,7 @@ const Files = () => {
         colHeaders: true,
         rowHeaders: true,
         width: "100%",
-        height: "600px",
+        height: "500px",
         licenseKey: "non-commercial-and-evaluation",
         contextMenu:true,
         filters:true,
