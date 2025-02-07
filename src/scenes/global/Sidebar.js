@@ -17,7 +17,7 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 import StorageIcon from '@mui/icons-material/Storage';
 import ScreenSearchDesktopIcon from '@mui/icons-material/ScreenSearchDesktop';
-import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
+import DatasetOutlinedIcon from '@mui/icons-material/DatasetOutlined';
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -128,7 +128,7 @@ const Sidebar = () => {
             <Item
               title="Data Manager"
               to="/files"
-              icon={<InsertDriveFileOutlinedIcon />}
+              icon={<DatasetOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
