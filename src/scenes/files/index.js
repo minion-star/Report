@@ -40,9 +40,6 @@ import { registerAllModules } from 'handsontable/registry'
 import Draggable from 'react-draggable';
 import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
-import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
-import ShowChartOutlinedIcon from '@mui/icons-material/ShowChartOutlined';
-import ScatterPlotOutlinedIcon from '@mui/icons-material/ScatterPlotOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import BalanceOutlinedIcon from '@mui/icons-material/BalanceOutlined';
 import PercentOutlinedIcon from '@mui/icons-material/PercentOutlined';
@@ -54,9 +51,13 @@ import AddIcon from"@mui/icons-material/Add"
 import ScatterChart from "./graphs/scatter";
 import BarChart from "./graphs/bar";
 import LineChart from "./graphs/line";
-
+import ChartTypeDialog from "./graphs/ChartType";
+import VerticalBarChart from "./graphs/basicverticalbar";
+import SmoothLineChart from "./graphs/smoothedlinechart";
 
 registerAllModules();
+
+
 
 function PaperComponent(props) {
   const nodeRef = React.useRef(null);
@@ -82,7 +83,7 @@ const Files = () => {
     const savedFiles = localStorage.getItem("spreadsheetTabs");
     return savedFiles ? JSON.parse(savedFiles) : [{ name: "Sheet1", data: emptyData }];
   });
-
+  
   const [activeTab, setActiveTab] = useState(0);
   const [dialogAction, setDialogAction] = useState(null);
   const [formulaDialog, setFormulaDialog] = useState(false);
@@ -442,10 +443,7 @@ const handleFormula = (row, col, formula) => {
           <Button><TimerOutlinedIcon/></Button>
           <Button><HeightOutlinedIcon/></Button>
           <Button><LockOutlinedIcon/></Button>
-          <Button><AnalyticsOutlinedIcon/></Button>
-          <Button onClick={() => handleDrawChart("bar")}><BarChartOutlinedIcon/></Button>
-          <Button onClick={() => handleDrawChart("line")}><ShowChartOutlinedIcon/></Button>
-          <Button onClick={() => handleDrawChart("scatter")}><ScatterPlotOutlinedIcon/></Button>
+          <Button onClick={() => setIsAnalytics(true)}><AnalyticsOutlinedIcon/></Button>
         </ButtonGroup>
       </Box>  
       {/* Tabs for Uploaded Files and Backend Data */}
@@ -488,9 +486,11 @@ const handleFormula = (row, col, formula) => {
       {/* Handsontable Display */}
       {charts.map((chart) => (
         <div key={chart.id}>
-          {chart.type === "bar" && <BarChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
+          {chart.type === "basicbar" && <BarChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
           {chart.type === "line" && <LineChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
           {chart.type === "scatter" && <ScatterChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
+          {chart.type === "basicvertivalbar" && <VerticalBarChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
+          {chart.type === "smoothedlinechart" && <VerticalBarChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
         </div>
       ))}
       <Box ref={hotTableRef} />
@@ -630,6 +630,9 @@ const handleFormula = (row, col, formula) => {
           <Button onClick={() => setWarningDialogOpen(false)} color="error" variant="outlined">Cancel</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Chart Type Setting */}
+      <ChartTypeDialog open={isAnalytics} onClose={()=>{setIsAnalytics(false)}} onSelectChart={handleDrawChart}/>
 
       {/* Chatbot Drawer */}
       <Drawer
