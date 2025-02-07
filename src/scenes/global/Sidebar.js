@@ -126,7 +126,7 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             <Item
-              title="Files"
+              title="Data Manager"
               to="/files"
               icon={<InsertDriveFileOutlinedIcon />}
               selected={selected}
