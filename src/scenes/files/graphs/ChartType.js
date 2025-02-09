@@ -35,10 +35,10 @@ const chartPreviews = {
     { title: "Basic Bar", img: "Basic Bar.png", type: "basicbar" },
     { title: "Basic Vertical Bar", img: "Basic Vertical Bar.png", type: "basicvertivalbar" },
   ],
-  line: [{ title: "Basic Line Chart", img: "Basic Line Chart.png", type: "line" },
+  line: [{ title: "Basic Line Chart", img: "Basic Line Chart.png", type: "basiclinechart" },
         {title: "Smoothed Line Chart", img: "Smoothed Line Chart.png", type: "smoothedlinechart"},
         {title: "Stacked Line Chart", img: "Stacked Line Chart.png", type: "line"},
-        {title: "Stacked Area Chart", img: "Stacked Area Chart.png", type: "line"}
+        {title: "Stacked Area Chart", img: "Stacked Area Chart.png", type: "line"},
   ],
   scatter: [{ title: "Scatter Chart", img: "Basic Scatter Chart.png", type:"scatter" }],
 };
@@ -90,7 +90,7 @@ const ChartTypeDialog = ({ open, onClose, onSelectChart }) => {
           <Grid2 container spacing={2}>
             {chartPreviews[selectedTab]?.map((chart, index) => (
               <Grid2 item xs={6} key={index}>
-                <Card sx={{ cursor: "pointer" }} onClick={() => handleSelectChart(chart.type)}>
+                <Card sx={{ cursor: "pointer", backgroundColor:"white" }} onClick={() => handleSelectChart(chart.type)}>
                   <CardContent>
                     <Typography>{chart.title}</Typography>
                     <img src={chart.img} alt={chart.title} width="100%" style={{ width: "150px", height: "100px", objectFit: "contain" }}  />

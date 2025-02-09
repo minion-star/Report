@@ -54,6 +54,7 @@ import LineChart from "./graphs/line";
 import ChartTypeDialog from "./graphs/ChartType";
 import VerticalBarChart from "./graphs/basicverticalbar";
 import SmoothLineChart from "./graphs/smoothedlinechart";
+import GradientStackedAreaChart from "./graphs/gradientstackedareachart";
 
 registerAllModules();
 
@@ -281,12 +282,12 @@ const Files = () => {
   };
   const customVLOOKUP = (lookupValue, tableRange, colIndex, exactMatch = true) => {
     for (let i = 0; i < tableRange.length; i++) {
-      if ((exactMatch && tableRange[i][0] === lookupValue) || 
-          (!exactMatch && tableRange[i][0].toString().includes(lookupValue.toString()))) {
-        return tableRange[i][colIndex - 1];  // colIndex is 1-based
+      if ((exactMatch && tableRange[i][0] == lookupValue) || 
+          (!exactMatch && tableRange[i][0]?.toString().includes(lookupValue.toString()))) {
+        return tableRange[i][colIndex - 1] ?? '#N/A'; // Avoid undefined values
       }
     }
-    return '#N/A';  // No match found
+    return '#N/A';
 };
 
 const customHLOOKUP = (lookupValue, tableRange, rowIndex, exactMatch = true) => {
@@ -294,63 +295,89 @@ const customHLOOKUP = (lookupValue, tableRange, rowIndex, exactMatch = true) => 
 
     const headerRow = tableRange[0]; // First row is the lookup row
     for (let col = 0; col < headerRow.length; col++) {
-      if ((exactMatch && headerRow[col] === lookupValue) || 
-          (!exactMatch && headerRow[col].toString().includes(lookupValue.toString()))) {
-        return tableRange[rowIndex - 1][col];  // rowIndex is 1-based
+      if ((exactMatch && headerRow[col] == lookupValue) || 
+          (!exactMatch && headerRow[col]?.toString().includes(lookupValue.toString()))) {
+        return tableRange[rowIndex - 1]?.[col] ?? '#N/A';
       }
     }
-    return '#N/A';  // No match found
+    return '#N/A';
 };
+
 
 const handleFormula = (row, col, formula) => {
-    try {
-      const isVLOOKUP = formula.startsWith('=VLOOKUP');
-      const isHLOOKUP = formula.startsWith('=HLOOKUP');
-  
-      if (isVLOOKUP || isHLOOKUP) {
-        const args = formula.match(/\((.*)\)/i)[1]
-          .split(',')
-          .map(arg => arg.trim());
-  
-        const lookupValue = isNaN(args[0]) ? args[0] : parseFloat(args[0]);
-        const tableRange = getTableRange(args[1]);
-        const index = parseInt(args[2], 10);
-        const exactMatch = args[3]?.toUpperCase() !== 'TRUE';
-  
-        let result;
-        if (isVLOOKUP) {
-          result = customVLOOKUP(lookupValue, tableRange, index, exactMatch);
-        } else {
-          result = customHLOOKUP(lookupValue, tableRange, index, exactMatch);
-        }
-  
-        hotInstanceRef.current.setDataAtCell(row, col, result);
+  try {
+    const isVLOOKUP = formula.startsWith('=VLOOKUP');
+    const isHLOOKUP = formula.startsWith('=HLOOKUP');
+
+    if (isVLOOKUP || isHLOOKUP) {
+      const match = formula.match(/\((.*)\)/i);
+      if (!match) throw new Error('Invalid formula format');
+
+      const args = match[1].split(',').map(arg => arg.trim());
+
+      const lookupValue = isNaN(args[0]) ? args[0].replace(/["']/g, '') : parseFloat(args[0]);
+      const tableRange = getTableRange(args[1].replace(/["']/g, ''));
+      const index = parseInt(args[2], 10);
+      const exactMatch = args[3]?.toUpperCase() === 'TRUE';
+
+      let result = '#N/A';
+      if (isVLOOKUP) {
+        result = customVLOOKUP(lookupValue, tableRange, index, exactMatch);
+      } else {
+        result = customHLOOKUP(lookupValue, tableRange, index, exactMatch);
       }
-    } catch (error) {
-      hotInstanceRef.current.setDataAtCell(row, col, '#ERROR');
+
+      hotInstanceRef.current.setDataAtCell(row, col, result);
     }
+  } catch (error) {
+    console.error(error);
+    hotInstanceRef.current.setDataAtCell(row, col, '#ERROR');
+  }
 };
 
-  
-  const getTableRange = (rangeStr) => {
-    const [startCell, endCell] = rangeStr.replace(/\$/g, '').split(':');
-    
-    const startCol = startCell[0].charCodeAt(0) - 65;
-    const startRow = parseInt(startCell.slice(1), 10) - 1;
-    
-    const endCol = endCell[0].charCodeAt(0) - 65;
-    const endRow = parseInt(endCell.slice(1), 10) - 1;
-  
-    const data = hotInstanceRef.current.getData();
-    const rangeData = [];
-  
-    for (let i = startRow; i <= endRow; i++) {
-      const row = data[i].slice(startCol, endCol + 1);
-      rangeData.push(row);
-    }
-  
-    return rangeData;
-  };
+const getTableRange = (rangeStr) => {
+  try {
+      const [startCell, endCell] = rangeStr.replace(/\$/g, '').split(':');
+
+      if (!startCell || !endCell) {
+          console.error("Invalid range format:", rangeStr);
+          return [];
+      }
+
+      const getColumnIndex = (col) => {
+          return col.split('').reduce((acc, char) => acc * 26 + (char.charCodeAt(0) - 64), 0) - 1;
+      };
+
+      // Extract column letters and row numbers
+      const startMatch = startCell.match(/([A-Z]+)(\d+)/);
+      const endMatch = endCell.match(/([A-Z]+)(\d+)/);
+
+      if (!startMatch || !endMatch) {
+          console.error("Invalid cell reference:", rangeStr);
+          return [];
+      }
+
+      const startCol = getColumnIndex(startMatch[1]);
+      const startRow = parseInt(startMatch[2], 10) - 1;
+
+      const endCol = getColumnIndex(endMatch[1]);
+      const endRow = parseInt(endMatch[2], 10) - 1;
+
+      const data = hotInstanceRef.current.getData();
+      const rangeData = [];
+
+      for (let i = startRow; i <= endRow; i++) {
+          if (!data[i]) continue; // Prevent out-of-bounds errors
+          rangeData.push(data[i].slice(startCol, endCol + 1));
+      }
+
+      return rangeData;
+  } catch (error) {
+      console.error("Error processing table range:", error);
+      return [];
+  }
+};
+
 
   const handleDrawChart = (type) => {
     if (selectedData.length > 1) {
@@ -429,7 +456,7 @@ const handleFormula = (row, col, formula) => {
 
   return (
     <Box m="20px">
-      <Header title="FILES" subtitle="Manage and View Your Excel Files" />
+      <Header title="Data Manager" subtitle="Manage and View Your Database" />
       {/* Buttons Section */}
       <Box display="flex" sx={{position: "absolute", top: 16, right: 300, height:36}}>
         <ButtonGroup variant="contained" component="span" color="success">
@@ -487,10 +514,11 @@ const handleFormula = (row, col, formula) => {
       {charts.map((chart) => (
         <div key={chart.id}>
           {chart.type === "basicbar" && <BarChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
-          {chart.type === "line" && <LineChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
+          {chart.type === "basiclinechart" && <LineChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
           {chart.type === "scatter" && <ScatterChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
           {chart.type === "basicvertivalbar" && <VerticalBarChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
-          {chart.type === "smoothedlinechart" && <VerticalBarChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
+          {chart.type === "smoothedlinechart" && <SmoothLineChart data={chart.data} labels={chart.labels} chartId={chart.id} />}
+          
         </div>
       ))}
       <Box ref={hotTableRef} />
