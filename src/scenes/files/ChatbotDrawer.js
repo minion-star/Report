@@ -57,7 +57,20 @@ const ChatbotDrawer = ({ open, setOpen }) => {
         </List>
       </DialogContent>
 
-     
+      {/* Input Area */}
+      <Box sx={{ padding: 2, display: "flex", alignItems: "center", gap: 1 }}>
+        <TextField
+          fullWidth
+          multiline
+          variant="outlined"
+          placeholder="Type a message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <Button variant="contained" color="secondary" onClick={handleSend}>
+          Send
+        </Button>
+      </Box>
     </Drawer>
   );
 };
