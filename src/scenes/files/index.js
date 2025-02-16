@@ -47,7 +47,14 @@ import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import HeightOutlinedIcon from '@mui/icons-material/HeightOutlined';
 import AnalyticsOutlinedIcon from '@mui/icons-material/AnalyticsOutlined';
-
+import AddIcon from"@mui/icons-material/Add"
+import ScatterChart from "./graphs/scatter";
+import BarChart from "./graphs/bar";
+import LineChart from "./graphs/line";
+import ChartTypeDialog from "./graphs/ChartType";
+import VerticalBarChart from "./graphs/basicverticalbar";
+import SmoothLineChart from "./graphs/smoothedlinechart";
+import GradientStackedAreaChart from "./graphs/gradientstackedareachart";
 
 registerAllModules();
 
